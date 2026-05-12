@@ -201,25 +201,25 @@ function App() {
   }
 
   return (
-    <main className="min-h-screen bg-night text-white">
-      <div className="mx-auto min-h-screen max-w-[480px] bg-[linear-gradient(180deg,#071326_0%,#101927_44%,#0b1628_100%)] pb-28 shadow-2xl">
-        <header className="sticky top-0 z-20 bg-gradient-to-b from-[#071326] via-[#071326]/96 to-[#071326]/86 px-5 pb-4 pt-5 backdrop-blur">
-          <div className="mb-4 flex justify-center">
-            <span className="rounded-full border border-electric/45 bg-electric/95 px-5 py-1 text-xs font-bold tracking-wide text-white shadow-[0_0_18px_rgba(22,136,255,.42)]">
+    <main className="min-h-screen bg-[#030812] text-white">
+      <div className="garage-shell mx-auto min-h-screen max-w-[480px] pb-32 shadow-[0_0_70px_rgba(0,0,0,.55)]">
+        <header className="sticky top-0 z-20 bg-gradient-to-b from-[#06101f]/96 via-[#06101f]/88 to-[#06101f]/58 px-5 pb-5 pt-5 backdrop-blur-2xl">
+          <div className="mb-5 flex justify-center">
+            <span className="garage-pill rounded-full border border-cyanGlow/45 bg-[linear-gradient(135deg,rgba(38,169,255,.95),rgba(11,96,255,.82))] px-6 py-1.5 text-xs font-bold tracking-[.24em] text-white">
               GARAGE
             </span>
           </div>
           <div className="grid grid-cols-[40px_1fr_40px] items-center">
-            <button className="grid h-10 w-10 place-items-center rounded-full text-white/95 active:bg-white/10" aria-label="返回">
+            <button className="icon-line-button grid h-10 w-10 place-items-center rounded-full text-white/90" aria-label="返回">
               <ArrowLeft size={34} strokeWidth={2.2} />
             </button>
-            <h1 className="text-center text-[30px] font-semibold tracking-wide">我的车库</h1>
-            <button className="grid h-10 w-10 place-items-center rounded-full text-white/70 active:bg-white/10" aria-label="更多">
+            <h1 className="title-emboss text-center text-[36px] font-semibold tracking-wide">我的车库</h1>
+            <button className="icon-line-button grid h-10 w-10 place-items-center rounded-full text-white/72" aria-label="更多">
               <MoreHorizontal size={25} />
             </button>
           </div>
           <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-          <label className="mt-5 flex h-11 items-center gap-3 rounded-full border border-white/8 bg-white/[.055] px-4 text-white/55">
+          <label className="glass-search mt-6 flex h-12 items-center gap-3 rounded-2xl px-4 text-white/62">
             <Search size={18} />
             <input
               value={query}
@@ -230,10 +230,10 @@ function App() {
           </label>
         </header>
 
-        <section className="space-y-4 px-4 pt-2">
+        <section className="space-y-5 px-4 pt-2">
           {visibleVehicles.length ? (
-            visibleVehicles.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} onOpen={() => setDetail(vehicle)} onEdit={() => openEdit(vehicle)} />
+            visibleVehicles.map((vehicle, index) => (
+              <VehicleCard key={vehicle.id} vehicle={vehicle} index={index} onOpen={() => setDetail(vehicle)} onEdit={() => openEdit(vehicle)} />
             ))
           ) : (
             <EmptyGarage activeTab={activeTab} onCreate={openCreate} />
@@ -264,41 +264,43 @@ function TabBar({ activeTab, setActiveTab }) {
     ['motorcycle', '摩托车'],
   ];
   return (
-    <nav className="mt-7 flex gap-8">
+    <nav className="mt-8 flex gap-8">
       {tabs.map(([key, label]) => (
         <button
           key={key}
           onClick={() => setActiveTab(key)}
-          className={`relative pb-2 text-[25px] font-semibold ${activeTab === key ? 'text-white' : 'text-white/66'}`}
+          className={`relative pb-2 text-[25px] font-semibold transition active:scale-95 ${activeTab === key ? 'text-white drop-shadow-[0_0_14px_rgba(104,216,255,.25)]' : 'text-white/52'}`}
         >
           {label}
-          {activeTab === key && <span className="absolute bottom-0 left-0 h-1 w-10 rounded-full bg-electric shadow-[0_0_12px_rgba(22,136,255,.9)]" />}
+          {activeTab === key && <span className="absolute bottom-0 left-0 h-1 w-11 rounded-full bg-[linear-gradient(90deg,#65dcff,#1688ff)] shadow-[0_0_16px_rgba(22,136,255,.95)]" />}
         </button>
       ))}
     </nav>
   );
 }
 
-function VehicleCard({ vehicle, onOpen, onEdit }) {
+function VehicleCard({ vehicle, index, onOpen, onEdit }) {
   const alerts = dueAlerts(vehicle);
   return (
     <article
       onClick={onOpen}
-      className="relative min-h-[216px] overflow-hidden rounded-[10px] border border-[#33465e] bg-[linear-gradient(100deg,#2a3443_0%,#293241_54%,#202b3a_100%)] p-5 shadow-card active:scale-[.99]"
+      style={{ animationDelay: `${index * 70}ms` }}
+      className="garage-card card-enter relative min-h-[226px] overflow-hidden rounded-[22px] p-5 transition duration-300 active:scale-[.985]"
     >
       {vehicle.verified && (
-        <div className="absolute left-0 top-0 rounded-br-[10px] bg-[#eaf0ff] px-3 py-1 text-[13px] font-semibold text-[#34415d]">Lv.2 认证车</div>
+        <div className="absolute left-0 top-0 rounded-br-[14px] border-b border-r border-cyanGlow/25 bg-cyanGlow/15 px-3 py-1 text-[13px] font-semibold text-cyanGlow shadow-[0_0_18px_rgba(104,216,255,.16)]">Lv.2 认证车</div>
       )}
-      <div className="pointer-events-none absolute right-10 top-1 text-[120px] font-black italic leading-none text-white/[.025]">AUTO</div>
+      <div className="pointer-events-none absolute -right-2 top-2 text-[96px] font-black italic leading-none tracking-[-.04em] text-white/[.035]">GARAGE</div>
+      <div className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-cyanGlow/45 to-transparent" />
       <button
         onClick={(event) => {
           event.stopPropagation();
           onEdit();
         }}
-        className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full text-white/70 active:bg-white/10"
+        className="icon-line-button absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full text-cyanGlow/85"
         aria-label="编辑车辆"
       >
-        <Pencil size={22} />
+        <Pencil size={18} />
       </button>
 
       <div className="relative z-10 max-w-[62%] pt-3">
@@ -306,15 +308,15 @@ function VehicleCard({ vehicle, onOpen, onEdit }) {
           <LogoImage src={vehicle.brandLogo} label={vehicle.brand} />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="truncate text-[27px] font-semibold tracking-wide text-[#edf2ff]">{vehicle.name || '未命名车辆'}</h2>
+              <h2 className="truncate text-[27px] font-semibold tracking-wide text-[#f0f6ff] drop-shadow-[0_0_14px_rgba(104,216,255,.12)]">{vehicle.name || '未命名车辆'}</h2>
               {vehicle.favorite && (
-                <span className="shrink-0 rounded bg-white/10 px-2 py-1 text-[13px] text-white/85">常用车</span>
+                <span className="shrink-0 rounded-full border border-cyanGlow/20 bg-cyanGlow/10 px-2 py-1 text-[12px] text-cyanGlow">常用车</span>
               )}
             </div>
           </div>
         </div>
 
-        <p className="mt-4 truncate text-[19px] text-white/57">
+        <p className="mt-4 truncate text-[18px] text-white/56">
           {vehicle.year ? `${vehicle.year} 款 ` : ''}
           {vehicle.model || '未填写型号'}
         </p>
@@ -327,9 +329,9 @@ function VehicleCard({ vehicle, onOpen, onEdit }) {
         </div>
       </div>
 
-      <div className="absolute bottom-5 right-3 flex h-[120px] w-[58%] items-end justify-end">
+      <div className="absolute bottom-5 right-0 flex h-[132px] w-[60%] items-end justify-end pr-2">
         {vehicle.vehicleImage ? (
-          <img src={vehicle.vehicleImage} alt={vehicle.name} className="max-h-full max-w-full object-contain drop-shadow-[0_18px_18px_rgba(0,0,0,.35)]" />
+          <img src={vehicle.vehicleImage} alt={vehicle.name} className="vehicle-float max-h-full max-w-full object-contain drop-shadow-[0_22px_22px_rgba(0,0,0,.42)]" />
         ) : (
           <DefaultVehicle type={vehicle.category} />
         )}
@@ -340,26 +342,26 @@ function VehicleCard({ vehicle, onOpen, onEdit }) {
 
 function LogoImage({ src, label }) {
   return (
-    <div className="grid h-[44px] w-[44px] shrink-0 place-items-center overflow-hidden rounded-full bg-white text-xs font-bold text-slate-700">
+    <div className="grid h-[46px] w-[46px] shrink-0 place-items-center overflow-hidden rounded-full border border-white/20 bg-white/90 text-xs font-bold text-slate-700 shadow-[0_0_18px_rgba(104,216,255,.14)]">
       {src ? <img src={src} alt={`${label || '品牌'} Logo`} className="h-full w-full object-cover" /> : <Car size={24} />}
     </div>
   );
 }
 
 function Tag({ children }) {
-  return <span className="rounded bg-white/[.09] px-2.5 py-1 text-[15px] text-white/66">{children}</span>;
+  return <span className="rounded-md border border-white/8 bg-white/[.075] px-2.5 py-1 text-[14px] text-white/66 shadow-[inset_0_1px_0_rgba(255,255,255,.04)]">{children}</span>;
 }
 
 function AlertTag({ children }) {
-  return <span className="rounded bg-[#ffb34d]/20 px-2.5 py-1 text-[15px] text-[#ffd28b]">{children}</span>;
+  return <span className="rounded-md border border-[#ffca74]/20 bg-[#ffb34d]/16 px-2.5 py-1 text-[14px] text-[#ffd28b] shadow-[0_0_14px_rgba(255,179,77,.14)]">{children}</span>;
 }
 
 function BottomDock({ onCreate }) {
   return (
-    <footer className="fixed bottom-0 left-1/2 z-30 w-full max-w-[480px] -translate-x-1/2 border-t border-white/5 bg-[#071326]/92 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 shadow-dock backdrop-blur-xl">
+    <footer className="fixed bottom-0 left-1/2 z-30 w-full max-w-[480px] -translate-x-1/2 bg-gradient-to-t from-[#040b16] via-[#040b16]/88 to-transparent px-5 pb-[max(18px,env(safe-area-inset-bottom))] pt-8">
       <button
         onClick={onCreate}
-        className="mx-auto block h-[60px] w-full rounded-2xl bg-[linear-gradient(135deg,#30b7ff_0%,#1688ff_48%,#0d5cff_100%)] text-[21px] font-semibold text-white shadow-[0_0_22px_rgba(22,136,255,.36),0_12px_32px_rgba(5,67,160,.42)] transition active:scale-[.975] active:brightness-110"
+        className="tech-add-button mx-auto block h-[62px] w-full rounded-[22px] text-[21px] font-semibold text-white transition active:scale-[.965] active:brightness-110"
       >
         添加车辆
       </button>
@@ -369,14 +371,14 @@ function BottomDock({ onCreate }) {
 
 function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#020916]/76 backdrop-blur-md">
-      <form onSubmit={onSave} className="max-h-[94vh] w-full max-w-[480px] overflow-y-auto rounded-t-[24px] border border-white/12 bg-[#101b2b]/95 p-5 text-white shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#020711]/82 backdrop-blur-xl">
+      <form onSubmit={onSave} className="panel-slide-up garage-panel h-[96vh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] p-5 text-white shadow-2xl">
+        <div className="sticky top-0 z-10 -mx-5 -mt-5 mb-5 flex items-center justify-between border-b border-white/8 bg-[#081424]/88 px-5 py-5 backdrop-blur-2xl">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.22em] text-electric/90">Vehicle File</p>
-            <h2 className="mt-1 text-2xl font-semibold">{draft.id ? '编辑车辆' : '添加车辆'}</h2>
+            <p className="text-xs font-semibold uppercase tracking-[.26em] text-cyanGlow/80">Vehicle Command</p>
+            <h2 className="mt-1 text-[28px] font-semibold drop-shadow-[0_0_18px_rgba(104,216,255,.12)]">{draft.id ? '编辑车辆档案' : '添加车辆档案'}</h2>
           </div>
-          <button type="button" onClick={onClose} className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[.06] text-white/75 active:bg-white/10">
+          <button type="button" onClick={onClose} className="icon-line-button grid h-11 w-11 place-items-center rounded-full text-white/75">
             <X size={22} />
           </button>
         </div>
@@ -386,8 +388,8 @@ function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
           <SegmentButton active={draft.category === 'motorcycle'} onClick={() => setDraftValue(setDraft, 'category', 'motorcycle')}>摩托车</SegmentButton>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <ImagePicker label="车辆图片" value={draft.vehicleImage} onChange={(value) => setDraftValue(setDraft, 'vehicleImage', value)} />
+        <div className="mt-5 grid gap-3">
+          <ImagePicker large label="车辆图片" value={draft.vehicleImage} onChange={(value) => setDraftValue(setDraft, 'vehicleImage', value)} />
           <ImagePicker label="品牌 Logo" value={draft.brandLogo} onChange={(value) => setDraftValue(setDraft, 'brandLogo', value)} />
         </div>
 
@@ -444,14 +446,14 @@ function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
           </label>
         </div>
 
-        <div className="sticky bottom-0 -mx-5 mt-6 flex gap-3 border-t border-white/8 bg-[#101b2b]/96 px-5 pb-1 pt-4 backdrop-blur-xl">
+        <div className="sticky bottom-0 -mx-5 mt-7 flex gap-3 border-t border-cyanGlow/10 bg-[#081424]/92 px-5 pb-1 pt-4 backdrop-blur-2xl">
           {onDelete && (
-            <button type="button" onClick={onDelete} className="grid h-12 w-12 place-items-center rounded-lg border border-red-400/30 text-red-200">
+            <button type="button" onClick={onDelete} className="icon-line-button grid h-12 w-12 place-items-center rounded-xl border-red-400/30 text-red-200">
               <Trash2 size={20} />
             </button>
           )}
-          <button type="button" onClick={onClose} className="h-12 rounded-xl border border-white/10 px-5 text-[16px] text-white/70 active:bg-white/[.06]">取消</button>
-          <button type="submit" className="h-12 flex-1 rounded-xl bg-[linear-gradient(135deg,#30b7ff,#1688ff_48%,#0d5cff)] text-lg font-semibold shadow-[0_0_18px_rgba(22,136,255,.34)] active:scale-[.985]">保存</button>
+          <button type="button" onClick={onClose} className="h-[52px] rounded-2xl border border-white/10 px-5 text-[16px] text-white/70 transition active:scale-[.97] active:bg-white/[.06]">取消</button>
+          <button type="submit" className="tech-add-button h-[52px] flex-1 rounded-2xl text-lg font-semibold transition active:scale-[.975]">保存档案</button>
         </div>
       </form>
     </div>
@@ -482,15 +484,18 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm">
-      <section className="max-h-[92vh] w-full max-w-[480px] overflow-y-auto rounded-t-[22px] border border-white/10 bg-[#101b2b] p-5 text-white shadow-2xl">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-[#020711]/82 backdrop-blur-xl">
+      <section className="panel-slide-up garage-panel max-h-[94vh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] p-5 text-white shadow-2xl">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">{vehicle.name}</h2>
-          <button onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full bg-white/8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[.24em] text-cyanGlow/75">Vehicle Archive</p>
+            <h2 className="mt-1 text-[28px] font-semibold drop-shadow-[0_0_18px_rgba(104,216,255,.12)]">{vehicle.name}</h2>
+          </div>
+          <button onClick={onClose} className="icon-line-button grid h-11 w-11 place-items-center rounded-full">
             <X size={22} />
           </button>
         </div>
-        <div className="mt-5 rounded-xl border border-white/10 bg-white/[.04] p-4">
+        <div className="archive-hero mt-5 overflow-hidden rounded-[24px] p-4">
           <div className="flex items-center gap-3">
             <LogoImage src={vehicle.brandLogo} label={vehicle.brand} />
             <div>
@@ -498,12 +503,13 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
               <div className="text-white/55">{vehicle.category === 'car' ? '汽车' : '摩托车'}</div>
             </div>
           </div>
-          <div className="mt-4 h-40">
-            {vehicle.vehicleImage ? <img src={vehicle.vehicleImage} alt={vehicle.name} className="h-full w-full object-contain" /> : <DefaultVehicle type={vehicle.category} />}
+          <div className="relative mt-4 h-52">
+            <div className="absolute inset-x-5 bottom-4 h-8 rounded-full bg-black/35 blur-xl" />
+            {vehicle.vehicleImage ? <img src={vehicle.vehicleImage} alt={vehicle.name} className="relative h-full w-full object-contain drop-shadow-[0_26px_24px_rgba(0,0,0,.45)]" /> : <DefaultVehicle type={vehicle.category} />}
           </div>
         </div>
         <DetailSection title="基本信息" items={basicItems} />
-        <section className="mt-5 rounded-xl border border-white/10 bg-white/[.045] p-4">
+        <section className="mt-5 rounded-2xl border border-cyanGlow/12 bg-white/[.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.05)]">
           <SectionTitle icon={<ShieldAlert size={17} />}>保险与年检</SectionTitle>
           <div className="mt-4 grid gap-3">
             {expiryItems.map(([label, value, state]) => (
@@ -511,28 +517,28 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
                 <span className="text-white/50">{label}</span>
                 <span className="flex flex-col items-end gap-1 text-right">
                   <span className="text-white/88">{value || '未填写'}</span>
-                  {value && <span className={`rounded px-2 py-0.5 text-xs ${state.tone}`}>{state.text}</span>}
+                  {value && <span className={`glow-status rounded-full px-2.5 py-1 text-xs ${state.tone}`}>{state.text}</span>}
                 </span>
               </div>
             ))}
           </div>
         </section>
         <DetailSection title="保养信息" items={maintenanceItems} />
-        <div className="mt-5 rounded-xl border border-white/10 bg-white/[.045] p-4">
+        <div className="mt-5 rounded-2xl border border-cyanGlow/12 bg-white/[.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.05)]">
           <SectionTitle>保养备注</SectionTitle>
           <p className="mt-3 whitespace-pre-wrap text-[15px] leading-6 text-white/86">{vehicle.maintenanceNote || '暂无保养备注'}</p>
         </div>
-        <div className="mt-5 rounded-lg bg-white/[.05] p-4">
+        <div className="mt-5 rounded-2xl border border-cyanGlow/12 bg-white/[.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.05)]">
           <SectionTitle>备注</SectionTitle>
           <p className="mt-2 whitespace-pre-wrap text-white/86">{vehicle.notes || '暂无备注'}</p>
         </div>
-        <button onClick={onEdit} className="mt-5 h-12 w-full rounded-lg bg-electric text-lg font-semibold">编辑车辆</button>
+        <button onClick={onEdit} className="tech-add-button mt-5 h-12 w-full rounded-2xl text-lg font-semibold transition active:scale-[.975]">编辑车辆</button>
       </section>
     </div>
   );
 }
 
-function ImagePicker({ label, value, onChange }) {
+function ImagePicker({ label, value, onChange, large = false }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
@@ -554,9 +560,9 @@ function ImagePicker({ label, value, onChange }) {
   }
 
   return (
-    <label className="relative grid h-36 cursor-pointer place-items-center overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.035))] shadow-[inset_0_1px_0_rgba(255,255,255,.06)]">
+    <label className={`upload-card relative grid cursor-pointer place-items-center overflow-hidden rounded-3xl ${large ? 'h-52' : 'h-32'}`}>
       {value ? (
-        <img src={value} alt={label} className="h-full w-full object-cover" />
+        <img src={value} alt={label} className={`h-full w-full ${large ? 'object-contain p-3' : 'object-cover'}`} />
       ) : (
         <span className="flex flex-col items-center gap-2 text-white/55">
           <ImagePlus size={24} />
@@ -570,7 +576,7 @@ function ImagePicker({ label, value, onChange }) {
         </span>
       )}
       {error && <span className="absolute bottom-2 left-2 right-12 rounded bg-red-500/80 px-2 py-1 text-xs text-white">{error}</span>}
-      <span className="absolute bottom-2 right-2 rounded-full bg-black/45 p-2">
+      <span className="absolute bottom-3 right-3 rounded-full border border-cyanGlow/25 bg-black/45 p-2 text-cyanGlow shadow-[0_0_14px_rgba(104,216,255,.16)]">
         <Upload size={16} />
       </span>
       <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
