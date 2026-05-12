@@ -5,9 +5,9 @@
   "homepage": "https://SWX2026.github.io/my-garage/",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "PATH=/opt/homebrew/bin:$PATH vite",
+    "build": "PATH=/opt/homebrew/bin:$PATH vite build",
+    "preview": "PATH=/opt/homebrew/bin:$PATH vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },

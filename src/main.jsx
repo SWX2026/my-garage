@@ -205,15 +205,13 @@ function App() {
       <div className="garage-shell mx-auto min-h-screen max-w-[480px] pb-32 shadow-[0_0_70px_rgba(0,0,0,.55)]">
         <header className="sticky top-0 z-20 bg-gradient-to-b from-[#06101f]/96 via-[#06101f]/88 to-[#06101f]/58 px-5 pb-5 pt-5 backdrop-blur-2xl">
           <div className="mb-5 flex justify-center">
-            <span className="garage-pill rounded-full border border-cyanGlow/45 bg-[linear-gradient(135deg,rgba(38,169,255,.95),rgba(11,96,255,.82))] px-6 py-1.5 text-xs font-bold tracking-[.24em] text-white">
-              GARAGE
-            </span>
+            <BrandLogo compact />
           </div>
           <div className="grid grid-cols-[40px_1fr_40px] items-center">
             <button className="icon-line-button grid h-10 w-10 place-items-center rounded-full text-white/90" aria-label="返回">
               <ArrowLeft size={34} strokeWidth={2.2} />
             </button>
-            <h1 className="title-emboss text-center text-[36px] font-semibold tracking-wide">我的车库</h1>
+            <h1 className="title-emboss text-center text-[34px] font-semibold tracking-wide">车库档案</h1>
             <button className="icon-line-button grid h-10 w-10 place-items-center rounded-full text-white/72" aria-label="更多">
               <MoreHorizontal size={25} />
             </button>
@@ -281,46 +279,54 @@ function TabBar({ activeTab, setActiveTab }) {
 
 function VehicleCard({ vehicle, index, onOpen, onEdit }) {
   const alerts = dueAlerts(vehicle);
+  const hasPhoto = Boolean(vehicle.vehicleImage);
   return (
     <article
       onClick={onOpen}
       style={{ animationDelay: `${index * 70}ms` }}
-      className="garage-card card-enter relative min-h-[226px] overflow-hidden rounded-[22px] p-5 transition duration-300 active:scale-[.985]"
+      className="garage-card card-enter relative min-h-[188px] overflow-hidden rounded-[22px] p-4 transition duration-300 active:scale-[.985]"
     >
-      {vehicle.verified && (
-        <div className="absolute left-0 top-0 rounded-br-[14px] border-b border-r border-cyanGlow/25 bg-cyanGlow/15 px-3 py-1 text-[13px] font-semibold text-cyanGlow shadow-[0_0_18px_rgba(104,216,255,.16)]">Lv.2 认证车</div>
+      {hasPhoto && (
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-75"
+          style={{ backgroundImage: `url(${vehicle.vehicleImage})` }}
+        />
       )}
-      <div className="pointer-events-none absolute -right-2 top-2 text-[96px] font-black italic leading-none tracking-[-.04em] text-white/[.035]">GARAGE</div>
+      <div className={`absolute inset-0 ${hasPhoto ? 'bg-[linear-gradient(90deg,rgba(5,12,22,.94)_0%,rgba(5,12,22,.76)_46%,rgba(5,12,22,.36)_100%),linear-gradient(180deg,rgba(5,12,22,.2)_0%,rgba(3,8,18,.9)_100%)]' : ''}`} />
+      {vehicle.verified && (
+        <div className="absolute left-0 top-0 rounded-br-[14px] border-b border-r border-cyanGlow/25 bg-cyanGlow/15 px-3 py-1 text-[12px] font-semibold text-cyanGlow shadow-[0_0_18px_rgba(104,216,255,.16)]">Lv.2 认证车</div>
+      )}
+      <div className="pointer-events-none absolute -right-2 top-2 text-[76px] font-black italic leading-none tracking-[-.04em] text-white/[.045]">G-VAULT</div>
       <div className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-cyanGlow/45 to-transparent" />
       <button
         onClick={(event) => {
           event.stopPropagation();
           onEdit();
         }}
-        className="icon-line-button absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full text-cyanGlow/85"
+        className="icon-line-button absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full text-cyanGlow/85"
         aria-label="编辑车辆"
       >
-        <Pencil size={18} />
+        <Pencil size={15} />
       </button>
 
-      <div className="relative z-10 max-w-[62%] pt-3">
+      <div className="relative z-10 max-w-[64%] pt-3">
         <div className="flex items-center gap-3">
           <LogoImage src={vehicle.brandLogo} label={vehicle.brand} />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="truncate text-[27px] font-semibold tracking-wide text-[#f0f6ff] drop-shadow-[0_0_14px_rgba(104,216,255,.12)]">{vehicle.name || '未命名车辆'}</h2>
+              <h2 className="truncate text-[22px] font-semibold tracking-wide text-[#f0f6ff] drop-shadow-[0_0_14px_rgba(104,216,255,.12)]">{vehicle.name || '未命名车辆'}</h2>
               {vehicle.favorite && (
-                <span className="shrink-0 rounded-full border border-cyanGlow/20 bg-cyanGlow/10 px-2 py-1 text-[12px] text-cyanGlow">常用车</span>
+                <span className="shrink-0 rounded-full border border-cyanGlow/20 bg-cyanGlow/10 px-2 py-0.5 text-[11px] text-cyanGlow">常用车</span>
               )}
             </div>
           </div>
         </div>
 
-        <p className="mt-4 truncate text-[18px] text-white/56">
+        <p className="mt-3 truncate text-[15px] text-white/62">
           {vehicle.year ? `${vehicle.year} 款 ` : ''}
           {vehicle.model || '未填写型号'}
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           <Tag>{vehicle.plate || '未登记车牌'}</Tag>
           <Tag>{vehicle.verified ? '已认证' : '申请认证'} <ChevronRight className="inline" size={13} /></Tag>
           {alerts.map((alert) => (
@@ -329,9 +335,9 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
         </div>
       </div>
 
-      <div className="absolute bottom-5 right-0 flex h-[132px] w-[60%] items-end justify-end pr-2">
-        {vehicle.vehicleImage ? (
-          <img src={vehicle.vehicleImage} alt={vehicle.name} className="vehicle-float max-h-full max-w-full object-contain drop-shadow-[0_22px_22px_rgba(0,0,0,.42)]" />
+      <div className="absolute bottom-4 right-0 flex h-[108px] w-[50%] items-end justify-end pr-2">
+        {hasPhoto ? (
+          <img src={vehicle.vehicleImage} alt={vehicle.name} className="vehicle-float max-h-full max-w-full object-contain opacity-90 drop-shadow-[0_22px_22px_rgba(0,0,0,.42)]" />
         ) : (
           <DefaultVehicle type={vehicle.category} />
         )}
@@ -342,18 +348,18 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
 
 function LogoImage({ src, label }) {
   return (
-    <div className="grid h-[46px] w-[46px] shrink-0 place-items-center overflow-hidden rounded-full border border-white/20 bg-white/90 text-xs font-bold text-slate-700 shadow-[0_0_18px_rgba(104,216,255,.14)]">
+    <div className="grid h-[40px] w-[40px] shrink-0 place-items-center overflow-hidden rounded-full border border-white/20 bg-white/90 text-xs font-bold text-slate-700 shadow-[0_0_18px_rgba(104,216,255,.14)]">
       {src ? <img src={src} alt={`${label || '品牌'} Logo`} className="h-full w-full object-cover" /> : <Car size={24} />}
     </div>
   );
 }
 
 function Tag({ children }) {
-  return <span className="rounded-md border border-white/8 bg-white/[.075] px-2.5 py-1 text-[14px] text-white/66 shadow-[inset_0_1px_0_rgba(255,255,255,.04)]">{children}</span>;
+  return <span className="rounded-md border border-white/8 bg-white/[.075] px-2 py-0.5 text-[12px] text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,.04)]">{children}</span>;
 }
 
 function AlertTag({ children }) {
-  return <span className="rounded-md border border-[#ffca74]/20 bg-[#ffb34d]/16 px-2.5 py-1 text-[14px] text-[#ffd28b] shadow-[0_0_14px_rgba(255,179,77,.14)]">{children}</span>;
+  return <span className="rounded-md border border-[#ffca74]/20 bg-[#ffb34d]/16 px-2 py-0.5 text-[12px] text-[#ffd28b] shadow-[0_0_14px_rgba(255,179,77,.14)]">{children}</span>;
 }
 
 function BottomDock({ onCreate }) {
@@ -369,13 +375,26 @@ function BottomDock({ onCreate }) {
   );
 }
 
+function BrandLogo({ compact = false }) {
+  return (
+    <div className={`garage-pill inline-flex items-center gap-2 rounded-full border border-cyanGlow/45 bg-[linear-gradient(135deg,rgba(38,169,255,.95),rgba(11,96,255,.82))] ${compact ? 'px-4 py-1.5' : 'px-5 py-2'}`}>
+      <svg className="h-5 w-5 drop-shadow-[0_0_10px_rgba(104,216,255,.55)]" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 3 27 8v8.5c0 6.5-4.6 10.5-11 12.5C9.6 27 5 23 5 16.5V8z" fill="rgba(3,12,25,.52)" stroke="rgba(210,244,255,.95)" strokeWidth="1.8" />
+        <path d="M9.5 14 16 8.7 22.5 14v8.2h-4.1v-4.7h-4.8v4.7H9.5z" fill="none" stroke="rgba(104,216,255,.95)" strokeWidth="1.8" strokeLinejoin="round" />
+        <path d="M11.2 13.6 16 22.4l4.8-8.8" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity=".82" />
+      </svg>
+      <span className="text-xs font-black tracking-[.24em] text-white">G-VAULT</span>
+    </div>
+  );
+}
+
 function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#020711]/82 backdrop-blur-xl">
       <form onSubmit={onSave} className="panel-slide-up garage-panel h-[96vh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] p-5 text-white shadow-2xl">
         <div className="sticky top-0 z-10 -mx-5 -mt-5 mb-5 flex items-center justify-between border-b border-white/8 bg-[#081424]/88 px-5 py-5 backdrop-blur-2xl">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.26em] text-cyanGlow/80">Vehicle Command</p>
+            <p className="text-xs font-semibold uppercase tracking-[.26em] text-cyanGlow/80">G-VAULT Command</p>
             <h2 className="mt-1 text-[28px] font-semibold drop-shadow-[0_0_18px_rgba(104,216,255,.12)]">{draft.id ? '编辑车辆档案' : '添加车辆档案'}</h2>
           </div>
           <button type="button" onClick={onClose} className="icon-line-button grid h-11 w-11 place-items-center rounded-full text-white/75">
@@ -389,7 +408,7 @@ function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
         </div>
 
         <div className="mt-5 grid gap-3">
-          <ImagePicker large label="车辆图片" value={draft.vehicleImage} onChange={(value) => setDraftValue(setDraft, 'vehicleImage', value)} />
+          <ImagePicker large label="车辆照片" value={draft.vehicleImage} onChange={(value) => setDraftValue(setDraft, 'vehicleImage', value)} />
           <ImagePicker label="品牌 Logo" value={draft.brandLogo} onChange={(value) => setDraftValue(setDraft, 'brandLogo', value)} />
         </div>
 
@@ -488,7 +507,7 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
       <section className="panel-slide-up garage-panel max-h-[94vh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] p-5 text-white shadow-2xl">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.24em] text-cyanGlow/75">Vehicle Archive</p>
+            <p className="text-xs font-semibold uppercase tracking-[.24em] text-cyanGlow/75">G-VAULT Archive</p>
             <h2 className="mt-1 text-[28px] font-semibold drop-shadow-[0_0_18px_rgba(104,216,255,.12)]">{vehicle.name}</h2>
           </div>
           <button onClick={onClose} className="icon-line-button grid h-11 w-11 place-items-center rounded-full">
@@ -567,7 +586,9 @@ function ImagePicker({ label, value, onChange, large = false }) {
         <span className="flex flex-col items-center gap-2 text-white/55">
           <ImagePlus size={24} />
           <span className="text-sm">{label}</span>
-          <span className="text-[11px] text-white/32">自动压缩保存</span>
+          <span className="px-3 text-center text-[11px] leading-4 text-white/36">
+            {large ? '建议上传车辆侧前方照片，效果最佳' : '自动压缩保存'}
+          </span>
         </span>
       )}
       {isProcessing && (
