@@ -8,7 +8,7 @@
     "dev": "PATH=/opt/homebrew/bin:$PATH vite",
     "build": "PATH=/opt/homebrew/bin:$PATH vite build",
     "preview": "PATH=/opt/homebrew/bin:$PATH vite preview",
-    "predeploy": "npm run build",
+    "predeploy": "/opt/homebrew/bin/npm run build",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
