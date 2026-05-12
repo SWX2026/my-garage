@@ -6,8 +6,8 @@ import {
   Camera,
   Car,
   ChevronRight,
-  Headphones,
   ImagePlus,
+  Loader2,
   MoreHorizontal,
   Pencil,
   Search,
@@ -32,6 +32,11 @@ const blankVehicle = {
   phone: '',
   insuranceExpiry: '',
   inspectionExpiry: '',
+  lastMaintenanceDate: '',
+  lastMaintenanceMileage: '',
+  nextMaintenanceDate: '',
+  nextMaintenanceMileage: '',
+  maintenanceNote: '',
   verified: false,
   favorite: false,
   vehicleImage: '',
@@ -54,6 +59,11 @@ const seedVehicles = [
     phone: '13800138000',
     insuranceExpiry: nextDate(18),
     inspectionExpiry: nextDate(76),
+    lastMaintenanceDate: '2026-02-16',
+    lastMaintenanceMileage: '11800',
+    nextMaintenanceDate: '2026-08-16',
+    nextMaintenanceMileage: '16800',
+    maintenanceNote: '下次检查刹车片和软顶机构。',
     verified: false,
     favorite: true,
     brandLogo: logoSvg('POR', '#f4d16e', '#241b12'),
@@ -74,6 +84,11 @@ const seedVehicles = [
     phone: '13988886666',
     insuranceExpiry: nextDate(42),
     inspectionExpiry: nextDate(12),
+    lastMaintenanceDate: '2026-01-09',
+    lastMaintenanceMileage: '32100',
+    nextMaintenanceDate: '2026-07-09',
+    nextMaintenanceMileage: '37100',
+    maintenanceNote: '年检前同步检查轮胎与底盘。',
     verified: true,
     favorite: false,
     brandLogo: logoSvg('MB', '#eef3f8', '#17202c'),
@@ -94,6 +109,11 @@ const seedVehicles = [
     phone: '13777778888',
     insuranceExpiry: nextDate(95),
     inspectionExpiry: nextDate(210),
+    lastMaintenanceDate: '2026-03-22',
+    lastMaintenanceMileage: '4200',
+    nextMaintenanceDate: '2026-09-22',
+    nextMaintenanceMileage: '7200',
+    maintenanceNote: '链条清洁后补油。',
     verified: true,
     favorite: true,
     brandLogo: logoSvg('DU', '#e84b3c', '#fff3f0'),
@@ -106,7 +126,7 @@ function App() {
   const [vehicles, setVehicles] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : seedVehicles;
+      return saved ? JSON.parse(saved).map((vehicle) => normalizeVehicle(vehicle)) : seedVehicles;
     } catch {
       return seedVehicles;
     }
@@ -118,7 +138,12 @@ function App() {
   const [detail, setDetail] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
+    } catch (error) {
+      console.error('LocalStorage 保存失败，可能是图片数据过大。', error);
+      alert('图片数据过大，浏览器本地存储空间不足。请换一张更小的图片后再试。');
+    }
   }, [vehicles]);
 
   const visibleVehicles = useMemo(() => {
@@ -149,7 +174,7 @@ function App() {
   }
 
   function openEdit(vehicle) {
-    setDraft({ ...vehicle });
+    setDraft(normalizeVehicle(vehicle));
     setModalMode('edit');
   }
 
@@ -178,8 +203,12 @@ function App() {
   return (
     <main className="min-h-screen bg-night text-white">
       <div className="mx-auto min-h-screen max-w-[480px] bg-[linear-gradient(180deg,#071326_0%,#101927_44%,#0b1628_100%)] pb-28 shadow-2xl">
-        <StatusBar />
         <header className="sticky top-0 z-20 bg-gradient-to-b from-[#071326] via-[#071326]/96 to-[#071326]/86 px-5 pb-4 pt-5 backdrop-blur">
+          <div className="mb-4 flex justify-center">
+            <span className="rounded-full border border-electric/45 bg-electric/95 px-5 py-1 text-xs font-bold tracking-wide text-white shadow-[0_0_18px_rgba(22,136,255,.42)]">
+              GARAGE
+            </span>
+          </div>
           <div className="grid grid-cols-[40px_1fr_40px] items-center">
             <button className="grid h-10 w-10 place-items-center rounded-full text-white/95 active:bg-white/10" aria-label="返回">
               <ArrowLeft size={34} strokeWidth={2.2} />
@@ -226,21 +255,6 @@ function App() {
 
       {detail && <VehicleDetail vehicle={detail} onClose={() => setDetail(null)} onEdit={() => openEdit(detail)} />}
     </main>
-  );
-}
-
-function StatusBar() {
-  return (
-    <div className="flex h-11 items-center justify-between px-9 pt-2 text-[16px] font-semibold text-white/95">
-      <span>13:55</span>
-      <span className="rounded-full bg-electric px-4 py-1 text-xs font-bold shadow-[0_0_18px_rgba(22,136,255,.42)]">GARAGE</span>
-      <span className="flex items-center gap-1">
-        <span className="h-3 w-1 rounded bg-white/70" />
-        <span className="h-4 w-1 rounded bg-white/80" />
-        <span className="h-5 w-1 rounded bg-white" />
-        <span className="ml-2 h-4 w-7 rounded border-2 border-white/80" />
-      </span>
-    </div>
   );
 }
 
@@ -342,14 +356,10 @@ function AlertTag({ children }) {
 
 function BottomDock({ onCreate }) {
   return (
-    <footer className="fixed bottom-0 left-1/2 z-30 grid w-full max-w-[480px] -translate-x-1/2 grid-cols-[82px_1fr] border-t border-white/5 bg-[#071326]/96 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-2 shadow-dock backdrop-blur">
-      <button className="flex flex-col items-center justify-center gap-1 text-white">
-        <Headphones size={32} />
-        <span className="text-[14px]">客服</span>
-      </button>
+    <footer className="fixed bottom-0 left-1/2 z-30 w-full max-w-[480px] -translate-x-1/2 border-t border-white/5 bg-[#071326]/92 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 shadow-dock backdrop-blur-xl">
       <button
         onClick={onCreate}
-        className="h-[58px] rounded-[4px] bg-electric text-[22px] font-semibold text-white shadow-[0_8px_26px_rgba(22,136,255,.34)] active:scale-[.99]"
+        className="mx-auto block h-[60px] w-full rounded-2xl bg-[linear-gradient(135deg,#30b7ff_0%,#1688ff_48%,#0d5cff_100%)] text-[21px] font-semibold text-white shadow-[0_0_22px_rgba(22,136,255,.36),0_12px_32px_rgba(5,67,160,.42)] transition active:scale-[.975] active:brightness-110"
       >
         添加车辆
       </button>
@@ -359,11 +369,14 @@ function BottomDock({ onCreate }) {
 
 function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
-      <form onSubmit={onSave} className="max-h-[92vh] w-full max-w-[480px] overflow-y-auto rounded-t-[22px] border border-white/10 bg-[#101b2b] p-5 text-white shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#020916]/76 backdrop-blur-md">
+      <form onSubmit={onSave} className="max-h-[94vh] w-full max-w-[480px] overflow-y-auto rounded-t-[24px] border border-white/12 bg-[#101b2b]/95 p-5 text-white shadow-2xl">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">{draft.id ? '编辑车辆' : '添加车辆'}</h2>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full bg-white/8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[.22em] text-electric/90">Vehicle File</p>
+            <h2 className="mt-1 text-2xl font-semibold">{draft.id ? '编辑车辆' : '添加车辆'}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[.06] text-white/75 active:bg-white/10">
             <X size={22} />
           </button>
         </div>
@@ -379,6 +392,7 @@ function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
         </div>
 
         <div className="mt-5 grid gap-4">
+          <FormSectionTitle>基本信息</FormSectionTitle>
           <Input label="车辆名称" value={draft.name} required onChange={(value) => setDraftValue(setDraft, 'name', value)} />
           <div className="grid grid-cols-2 gap-3">
             <Input label="品牌" value={draft.brand} onChange={(value) => setDraftValue(setDraft, 'brand', value)} />
@@ -397,28 +411,47 @@ function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
             <Input label="保险到期日" value={draft.insuranceExpiry} type="date" onChange={(value) => setDraftValue(setDraft, 'insuranceExpiry', value)} />
             <Input label="年检到期日" value={draft.inspectionExpiry} type="date" onChange={(value) => setDraftValue(setDraft, 'inspectionExpiry', value)} />
           </div>
+          <FormSectionTitle>保养信息</FormSectionTitle>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="上次保养时间" value={draft.lastMaintenanceDate} type="date" onChange={(value) => setDraftValue(setDraft, 'lastMaintenanceDate', value)} />
+            <Input label="上次保养公里数" value={draft.lastMaintenanceMileage} inputMode="numeric" onChange={(value) => setDraftValue(setDraft, 'lastMaintenanceMileage', value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="下次保养时间" value={draft.nextMaintenanceDate} type="date" onChange={(value) => setDraftValue(setDraft, 'nextMaintenanceDate', value)} />
+            <Input label="下次保养公里数" value={draft.nextMaintenanceMileage} inputMode="numeric" onChange={(value) => setDraftValue(setDraft, 'nextMaintenanceMileage', value)} />
+          </div>
+          <label className="block">
+            <span className="text-sm text-white/62">保养备注</span>
+            <textarea
+              value={draft.maintenanceNote}
+              onChange={(event) => setDraftValue(setDraft, 'maintenanceNote', event.target.value)}
+              rows={3}
+              className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-white/[.07] px-4 py-3 text-[16px] leading-6 outline-none transition focus:border-electric focus:bg-white/[.09]"
+            />
+          </label>
           <div className="grid grid-cols-2 gap-3">
             <Toggle active={draft.verified} onClick={() => setDraftValue(setDraft, 'verified', !draft.verified)} icon={<BadgeCheck size={18} />}>认证状态</Toggle>
             <Toggle active={draft.favorite} onClick={() => setDraftValue(setDraft, 'favorite', !draft.favorite)} icon={<Star size={18} />}>常用车</Toggle>
           </div>
           <label className="block">
-            <span className="text-sm text-white/55">备注</span>
+            <span className="text-sm text-white/62">备注</span>
             <textarea
               value={draft.notes}
               onChange={(event) => setDraftValue(setDraft, 'notes', event.target.value)}
               rows={4}
-              className="mt-2 w-full resize-none rounded-lg border border-white/10 bg-white/[.06] px-3 py-3 text-[16px] outline-none focus:border-electric"
+              className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-white/[.07] px-4 py-3 text-[16px] leading-6 outline-none transition focus:border-electric focus:bg-white/[.09]"
             />
           </label>
         </div>
 
-        <div className="sticky bottom-0 mt-6 flex gap-3 bg-[#101b2b] pb-1 pt-4">
+        <div className="sticky bottom-0 -mx-5 mt-6 flex gap-3 border-t border-white/8 bg-[#101b2b]/96 px-5 pb-1 pt-4 backdrop-blur-xl">
           {onDelete && (
             <button type="button" onClick={onDelete} className="grid h-12 w-12 place-items-center rounded-lg border border-red-400/30 text-red-200">
               <Trash2 size={20} />
             </button>
           )}
-          <button type="submit" className="h-12 flex-1 rounded-lg bg-electric text-lg font-semibold">保存</button>
+          <button type="button" onClick={onClose} className="h-12 rounded-xl border border-white/10 px-5 text-[16px] text-white/70 active:bg-white/[.06]">取消</button>
+          <button type="submit" className="h-12 flex-1 rounded-xl bg-[linear-gradient(135deg,#30b7ff,#1688ff_48%,#0d5cff)] text-lg font-semibold shadow-[0_0_18px_rgba(22,136,255,.34)] active:scale-[.985]">保存</button>
         </div>
       </form>
     </div>
@@ -426,7 +459,7 @@ function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
 }
 
 function VehicleDetail({ vehicle, onClose, onEdit }) {
-  const items = [
+  const basicItems = [
     ['品牌', vehicle.brand],
     ['型号', vehicle.model],
     ['年款', vehicle.year],
@@ -434,10 +467,18 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
     ['VIN 车架号', vehicle.vin],
     ['车主姓名', vehicle.owner],
     ['联系电话', vehicle.phone],
-    ['保险到期日', vehicle.insuranceExpiry],
-    ['年检到期日', vehicle.inspectionExpiry],
     ['认证状态', vehicle.verified ? '已认证' : '未认证'],
     ['是否常用车', vehicle.favorite ? '是' : '否'],
+  ];
+  const expiryItems = [
+    ['保险到期日', vehicle.insuranceExpiry, expiryLabel(vehicle.insuranceExpiry)],
+    ['年检到期日', vehicle.inspectionExpiry, expiryLabel(vehicle.inspectionExpiry)],
+  ];
+  const maintenanceItems = [
+    ['上次保养时间', vehicle.lastMaintenanceDate],
+    ['上次保养公里数', formatMileage(vehicle.lastMaintenanceMileage)],
+    ['下次保养时间', vehicle.nextMaintenanceDate],
+    ['下次保养公里数', formatMileage(vehicle.nextMaintenanceMileage)],
   ];
 
   return (
@@ -461,16 +502,28 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
             {vehicle.vehicleImage ? <img src={vehicle.vehicleImage} alt={vehicle.name} className="h-full w-full object-contain" /> : <DefaultVehicle type={vehicle.category} />}
           </div>
         </div>
-        <div className="mt-5 grid gap-3">
-          {items.map(([label, value]) => (
-            <div key={label} className="flex justify-between gap-4 border-b border-white/8 pb-3 text-[15px]">
-              <span className="text-white/50">{label}</span>
-              <span className="max-w-[66%] break-words text-right text-white/88">{value || '未填写'}</span>
-            </div>
-          ))}
+        <DetailSection title="基本信息" items={basicItems} />
+        <section className="mt-5 rounded-xl border border-white/10 bg-white/[.045] p-4">
+          <SectionTitle icon={<ShieldAlert size={17} />}>保险与年检</SectionTitle>
+          <div className="mt-4 grid gap-3">
+            {expiryItems.map(([label, value, state]) => (
+              <div key={label} className="flex items-center justify-between gap-4 border-b border-white/8 pb-3 text-[15px] last:border-b-0 last:pb-0">
+                <span className="text-white/50">{label}</span>
+                <span className="flex flex-col items-end gap-1 text-right">
+                  <span className="text-white/88">{value || '未填写'}</span>
+                  {value && <span className={`rounded px-2 py-0.5 text-xs ${state.tone}`}>{state.text}</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+        <DetailSection title="保养信息" items={maintenanceItems} />
+        <div className="mt-5 rounded-xl border border-white/10 bg-white/[.045] p-4">
+          <SectionTitle>保养备注</SectionTitle>
+          <p className="mt-3 whitespace-pre-wrap text-[15px] leading-6 text-white/86">{vehicle.maintenanceNote || '暂无保养备注'}</p>
         </div>
         <div className="mt-5 rounded-lg bg-white/[.05] p-4">
-          <div className="text-sm text-white/50">备注</div>
+          <SectionTitle>备注</SectionTitle>
           <p className="mt-2 whitespace-pre-wrap text-white/86">{vehicle.notes || '暂无备注'}</p>
         </div>
         <button onClick={onEdit} className="mt-5 h-12 w-full rounded-lg bg-electric text-lg font-semibold">编辑车辆</button>
@@ -480,23 +533,43 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
 }
 
 function ImagePicker({ label, value, onChange }) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
+
   async function handleFile(event) {
     const file = event.target.files?.[0];
     if (!file) return;
-    const base64 = await fileToBase64(file);
-    onChange(base64);
+    setIsProcessing(true);
+    setError('');
+    try {
+      const base64 = await compressImageToBase64(file);
+      onChange(base64);
+    } catch (uploadError) {
+      console.error(uploadError);
+      setError('图片处理失败，请换一张图片');
+    } finally {
+      setIsProcessing(false);
+      event.target.value = '';
+    }
   }
 
   return (
-    <label className="relative grid h-32 cursor-pointer place-items-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-white/[.045]">
+    <label className="relative grid h-36 cursor-pointer place-items-center overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.035))] shadow-[inset_0_1px_0_rgba(255,255,255,.06)]">
       {value ? (
         <img src={value} alt={label} className="h-full w-full object-cover" />
       ) : (
         <span className="flex flex-col items-center gap-2 text-white/55">
           <ImagePlus size={24} />
           <span className="text-sm">{label}</span>
+          <span className="text-[11px] text-white/32">自动压缩保存</span>
         </span>
       )}
+      {isProcessing && (
+        <span className="absolute inset-0 grid place-items-center bg-[#071326]/75 text-white">
+          <Loader2 className="animate-spin" size={26} />
+        </span>
+      )}
+      {error && <span className="absolute bottom-2 left-2 right-12 rounded bg-red-500/80 px-2 py-1 text-xs text-white">{error}</span>}
       <span className="absolute bottom-2 right-2 rounded-full bg-black/45 p-2">
         <Upload size={16} />
       </span>
@@ -505,17 +578,46 @@ function ImagePicker({ label, value, onChange }) {
   );
 }
 
+function FormSectionTitle({ children }) {
+  return <h3 className="pt-1 text-sm font-semibold uppercase tracking-[.16em] text-white/42">{children}</h3>;
+}
+
+function DetailSection({ title, items }) {
+  return (
+    <section className="mt-5 rounded-xl border border-white/10 bg-white/[.045] p-4">
+      <SectionTitle>{title}</SectionTitle>
+      <div className="mt-4 grid gap-3">
+        {items.map(([label, value]) => (
+          <div key={label} className="flex justify-between gap-4 border-b border-white/8 pb-3 text-[15px] last:border-b-0 last:pb-0">
+            <span className="text-white/50">{label}</span>
+            <span className="max-w-[66%] break-words text-right text-white/88">{value || '未填写'}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SectionTitle({ children, icon }) {
+  return (
+    <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[.14em] text-white/50">
+      {icon}
+      <span>{children}</span>
+    </div>
+  );
+}
+
 function Input({ label, value, onChange, type = 'text', required, inputMode }) {
   return (
     <label className="block">
-      <span className="text-sm text-white/55">{label}</span>
+      <span className="text-sm text-white/62">{label}</span>
       <input
         type={type}
         required={required}
         inputMode={inputMode}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-11 w-full rounded-lg border border-white/10 bg-white/[.06] px-3 text-[16px] outline-none focus:border-electric"
+        className="mt-2 h-12 w-full rounded-xl border border-white/10 bg-white/[.07] px-4 text-[16px] outline-none transition placeholder:text-white/30 focus:border-electric focus:bg-white/[.09]"
       />
     </label>
   );
@@ -575,15 +677,20 @@ function normalizeVehicle(vehicle) {
   return {
     ...blankVehicle,
     ...vehicle,
-    name: vehicle.name.trim(),
-    brand: vehicle.brand.trim(),
-    model: vehicle.model.trim(),
-    year: vehicle.year.trim(),
-    plate: vehicle.plate.trim(),
-    vin: vehicle.vin.trim(),
-    owner: vehicle.owner.trim(),
-    phone: vehicle.phone.trim(),
-    notes: vehicle.notes.trim(),
+    name: (vehicle.name || '').trim(),
+    brand: (vehicle.brand || '').trim(),
+    model: (vehicle.model || '').trim(),
+    year: (vehicle.year || '').trim(),
+    plate: (vehicle.plate || '').trim(),
+    vin: (vehicle.vin || '').trim(),
+    owner: (vehicle.owner || '').trim(),
+    phone: (vehicle.phone || '').trim(),
+    lastMaintenanceDate: vehicle.lastMaintenanceDate || '',
+    lastMaintenanceMileage: (vehicle.lastMaintenanceMileage || '').trim(),
+    nextMaintenanceDate: vehicle.nextMaintenanceDate || '',
+    nextMaintenanceMileage: (vehicle.nextMaintenanceMileage || '').trim(),
+    maintenanceNote: (vehicle.maintenanceNote || '').trim(),
+    notes: (vehicle.notes || '').trim(),
   };
 }
 
@@ -591,13 +698,49 @@ function setDraftValue(setDraft, key, value) {
   setDraft((current) => ({ ...current, [key]: value }));
 }
 
-function fileToBase64(file) {
+function compressImageToBase64(file) {
   return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('请选择图片文件'));
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const maxWidth = 1200;
+        const scale = Math.min(1, maxWidth / image.width);
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#101b2b';
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      image.onerror = () => reject(new Error('图片无法读取'));
+      image.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error('图片读取失败'));
     reader.readAsDataURL(file);
   });
+}
+
+function expiryLabel(dateString) {
+  const days = daysUntil(dateString);
+  if (days === null) return { text: '', tone: '' };
+  if (days < 0) return { text: `已逾期 ${Math.abs(days)} 天`, tone: 'bg-red-500/20 text-red-200' };
+  if (days <= 30) return { text: `${days} 天后到期`, tone: 'bg-[#ffb34d]/20 text-[#ffd28b]' };
+  return { text: `${days} 天后到期`, tone: 'bg-emerald-400/15 text-emerald-200' };
+}
+
+function formatMileage(value) {
+  if (!value) return '';
+  const number = Number(value);
+  return Number.isFinite(number) ? `${number.toLocaleString()} km` : `${value} km`;
 }
 
 function dueAlerts(vehicle) {
