@@ -1,18 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   ArrowLeft,
-  BadgeCheck,
   Camera,
   Car,
-  ChevronRight,
   ImagePlus,
   Loader2,
   MoreHorizontal,
   Pencil,
   Search,
   ShieldAlert,
-  Star,
   Trash2,
   Upload,
   X,
@@ -28,8 +25,8 @@ const blankVehicle = {
   year: '',
   plate: '',
   vin: '',
-  owner: '',
-  phone: '',
+  color: '',
+  purchaseDate: '',
   insuranceExpiry: '',
   inspectionExpiry: '',
   lastMaintenanceDate: '',
@@ -37,10 +34,10 @@ const blankVehicle = {
   nextMaintenanceDate: '',
   nextMaintenanceMileage: '',
   maintenanceNote: '',
-  verified: false,
-  favorite: false,
   vehicleImage: '',
+  documentImage: '',
   brandLogo: '',
+  expenses: [],
   notes: '',
 };
 
@@ -55,8 +52,8 @@ const seedVehicles = [
     year: '2022',
     plate: '苏AW***0',
     vin: 'WP0CA2998NS112233',
-    owner: '陈先生',
-    phone: '13800138000',
+    color: '深海蓝',
+    purchaseDate: '2024-06-18',
     insuranceExpiry: nextDate(18),
     inspectionExpiry: nextDate(76),
     lastMaintenanceDate: '2026-02-16',
@@ -64,8 +61,6 @@ const seedVehicles = [
     nextMaintenanceDate: '2026-08-16',
     nextMaintenanceMileage: '16800',
     maintenanceNote: '下次检查刹车片和软顶机构。',
-    verified: false,
-    favorite: true,
     brandLogo: logoSvg('POR', '#f4d16e', '#241b12'),
     vehicleImage: carSvg('#233f8d', '#141b2a'),
     notes: '常用车，周末出行使用。',
@@ -80,8 +75,8 @@ const seedVehicles = [
     year: '2023',
     plate: '苏AS***5',
     vin: 'W1NYC7HJ6PX445566',
-    owner: '林女士',
-    phone: '13988886666',
+    color: '曜石银',
+    purchaseDate: '2023-10-09',
     insuranceExpiry: nextDate(42),
     inspectionExpiry: nextDate(12),
     lastMaintenanceDate: '2026-01-09',
@@ -89,8 +84,6 @@ const seedVehicles = [
     nextMaintenanceDate: '2026-07-09',
     nextMaintenanceMileage: '37100',
     maintenanceNote: '年检前同步检查轮胎与底盘。',
-    verified: true,
-    favorite: false,
     brandLogo: logoSvg('MB', '#eef3f8', '#17202c'),
     vehicleImage: carSvg('#eef2f5', '#182538'),
     notes: '年检快到期，优先安排。',
@@ -105,8 +98,8 @@ const seedVehicles = [
     year: '2024',
     plate: '沪C D***9',
     vin: 'ZDMFAKWW8RB778899',
-    owner: '周先生',
-    phone: '13777778888',
+    color: '赛道红',
+    purchaseDate: '2024-03-12',
     insuranceExpiry: nextDate(95),
     inspectionExpiry: nextDate(210),
     lastMaintenanceDate: '2026-03-22',
@@ -114,8 +107,6 @@ const seedVehicles = [
     nextMaintenanceDate: '2026-09-22',
     nextMaintenanceMileage: '7200',
     maintenanceNote: '链条清洁后补油。',
-    verified: true,
-    favorite: true,
     brandLogo: logoSvg('DU', '#e84b3c', '#fff3f0'),
     vehicleImage: motorcycleSvg('#d2362b'),
     notes: '摩托车位 A-07。',
@@ -159,8 +150,7 @@ function App() {
           vehicle.year,
           vehicle.plate,
           vehicle.vin,
-          vehicle.owner,
-          vehicle.phone,
+          vehicle.color,
         ]
           .join(' ')
           .toLowerCase()
@@ -293,9 +283,6 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
         />
       )}
       <div className={`absolute inset-0 ${hasPhoto ? 'bg-[linear-gradient(90deg,rgba(5,12,22,.88)_0%,rgba(5,12,22,.64)_42%,rgba(5,12,22,.12)_72%,rgba(5,12,22,0)_100%),linear-gradient(180deg,rgba(5,12,22,.05)_0%,rgba(3,8,18,.42)_100%)]' : ''}`} />
-      {vehicle.verified && (
-        <div className="absolute left-0 top-0 rounded-br-[14px] border-b border-r border-cyanGlow/25 bg-cyanGlow/15 px-3 py-1 text-[12px] font-semibold text-cyanGlow shadow-[0_0_18px_rgba(104,216,255,.16)]">Lv.2 认证车</div>
-      )}
       <div className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-cyanGlow/45 to-transparent" />
       <button
         onClick={(event) => {
@@ -314,9 +301,6 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="truncate text-[22px] font-semibold tracking-wide text-[#f0f6ff] drop-shadow-[0_0_14px_rgba(0,0,0,.42)]">{vehicle.name || '未命名车辆'}</h2>
-              {vehicle.favorite && (
-                <span className="shrink-0 rounded-full border border-cyanGlow/20 bg-cyanGlow/10 px-2 py-0.5 text-[11px] text-cyanGlow">常用车</span>
-              )}
             </div>
           </div>
         </div>
@@ -327,7 +311,8 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
         </p>
         <div className="mt-3 flex flex-wrap gap-1.5">
           <Tag>{vehicle.plate || '未登记车牌'}</Tag>
-          <Tag>{vehicle.verified ? '已认证' : '申请认证'} <ChevronRight className="inline" size={13} /></Tag>
+          {vehicle.color && <Tag>{vehicle.color}</Tag>}
+          <Tag>{vehicle.category === 'car' ? '汽车' : '摩托车'}</Tag>
           {alerts.map((alert) => (
             <AlertTag key={alert}>{alert}</AlertTag>
           ))}
@@ -387,26 +372,21 @@ function BrandLogo({ compact = false }) {
 
 function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#020711]/82 backdrop-blur-xl">
-      <form onSubmit={onSave} className="panel-slide-up garage-panel h-[96vh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] p-5 text-white shadow-2xl">
-        <div className="sticky top-0 z-10 -mx-5 -mt-5 mb-5 flex items-center justify-between border-b border-white/8 bg-[#081424]/88 px-5 py-5 backdrop-blur-2xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/35 backdrop-blur-md">
+      <form onSubmit={onSave} className="panel-slide-up light-panel h-[96vh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] p-5 text-slate-900 shadow-2xl">
+        <div className="sticky top-0 z-10 -mx-5 -mt-5 mb-5 flex items-center justify-between border-b border-slate-200/80 bg-white/88 px-5 py-5 backdrop-blur-2xl">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.26em] text-cyanGlow/80">G-VAULT Command</p>
-            <h2 className="mt-1 text-[28px] font-semibold drop-shadow-[0_0_18px_rgba(104,216,255,.12)]">{draft.id ? '编辑车辆档案' : '添加车辆档案'}</h2>
+            <p className="text-xs font-semibold uppercase tracking-[.26em] text-blue-500">G-VAULT Command</p>
+            <h2 className="mt-1 text-[28px] font-semibold text-slate-950">{draft.id ? '编辑车辆档案' : '添加车辆档案'}</h2>
           </div>
-          <button type="button" onClick={onClose} className="icon-line-button grid h-11 w-11 place-items-center rounded-full text-white/75">
+          <button type="button" onClick={onClose} className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 active:scale-95">
             <X size={22} />
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <SegmentButton active={draft.category === 'car'} onClick={() => setDraftValue(setDraft, 'category', 'car')}>汽车</SegmentButton>
-          <SegmentButton active={draft.category === 'motorcycle'} onClick={() => setDraftValue(setDraft, 'category', 'motorcycle')}>摩托车</SegmentButton>
-        </div>
-
         <div className="mt-5 grid gap-3">
-          <ImagePicker large label="车辆照片" value={draft.vehicleImage} onChange={(value) => setDraftValue(setDraft, 'vehicleImage', value)} />
-          <ImagePicker label="品牌 Logo" value={draft.brandLogo} onChange={(value) => setDraftValue(setDraft, 'brandLogo', value)} />
+          <ImagePicker large aspect={16 / 9} label="车辆封面照片" hint="建议上传车辆侧前方照片，效果最佳" value={draft.vehicleImage} onChange={(value) => setDraftValue(setDraft, 'vehicleImage', value)} />
+          <ImagePicker aspect={4 / 3} label="证件/行驶证照片（可选）" hint="按 4:3 裁剪，仅在详情页显示" value={draft.documentImage} onChange={(value) => setDraftValue(setDraft, 'documentImage', value)} />
         </div>
 
         <div className="mt-5 grid gap-4">
@@ -420,11 +400,11 @@ function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
             <Input label="年款" value={draft.year} inputMode="numeric" onChange={(value) => setDraftValue(setDraft, 'year', value)} />
             <Input label="车牌号" value={draft.plate} onChange={(value) => setDraftValue(setDraft, 'plate', value)} />
           </div>
-          <Input label="VIN 车架号" value={draft.vin} onChange={(value) => setDraftValue(setDraft, 'vin', value)} />
           <div className="grid grid-cols-2 gap-3">
-            <Input label="车主姓名" value={draft.owner} onChange={(value) => setDraftValue(setDraft, 'owner', value)} />
-            <Input label="联系电话" value={draft.phone} type="tel" onChange={(value) => setDraftValue(setDraft, 'phone', value)} />
+            <Input label="颜色" value={draft.color} onChange={(value) => setDraftValue(setDraft, 'color', value)} />
+            <Input label="购买日期" value={draft.purchaseDate} type="date" onChange={(value) => setDraftValue(setDraft, 'purchaseDate', value)} />
           </div>
+          <Input label="VIN 车架号" value={draft.vin} onChange={(value) => setDraftValue(setDraft, 'vin', value)} />
           <div className="grid grid-cols-2 gap-3">
             <Input label="保险到期日" value={draft.insuranceExpiry} type="date" onChange={(value) => setDraftValue(setDraft, 'insuranceExpiry', value)} />
             <Input label="年检到期日" value={draft.inspectionExpiry} type="date" onChange={(value) => setDraftValue(setDraft, 'inspectionExpiry', value)} />
@@ -439,37 +419,34 @@ function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
             <Input label="下次保养公里数" value={draft.nextMaintenanceMileage} inputMode="numeric" onChange={(value) => setDraftValue(setDraft, 'nextMaintenanceMileage', value)} />
           </div>
           <label className="block">
-            <span className="text-sm text-white/62">保养备注</span>
+            <span className="text-sm font-medium text-slate-600">保养备注</span>
             <textarea
               value={draft.maintenanceNote}
               onChange={(event) => setDraftValue(setDraft, 'maintenanceNote', event.target.value)}
               rows={3}
-              className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-white/[.07] px-4 py-3 text-[16px] leading-6 outline-none transition focus:border-electric focus:bg-white/[.09]"
+              className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-[16px] leading-6 text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
             />
           </label>
-          <div className="grid grid-cols-2 gap-3">
-            <Toggle active={draft.verified} onClick={() => setDraftValue(setDraft, 'verified', !draft.verified)} icon={<BadgeCheck size={18} />}>认证状态</Toggle>
-            <Toggle active={draft.favorite} onClick={() => setDraftValue(setDraft, 'favorite', !draft.favorite)} icon={<Star size={18} />}>常用车</Toggle>
-          </div>
+          <ExpenseEditor expenses={draft.expenses} onChange={(expenses) => setDraftValue(setDraft, 'expenses', expenses)} />
           <label className="block">
-            <span className="text-sm text-white/62">备注</span>
+            <span className="text-sm font-medium text-slate-600">备注</span>
             <textarea
               value={draft.notes}
               onChange={(event) => setDraftValue(setDraft, 'notes', event.target.value)}
               rows={4}
-              className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-white/[.07] px-4 py-3 text-[16px] leading-6 outline-none transition focus:border-electric focus:bg-white/[.09]"
+              className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-[16px] leading-6 text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
             />
           </label>
         </div>
 
-        <div className="sticky bottom-0 -mx-5 mt-7 flex gap-3 border-t border-cyanGlow/10 bg-[#081424]/92 px-5 pb-1 pt-4 backdrop-blur-2xl">
+        <div className="sticky bottom-0 -mx-5 mt-7 flex gap-3 border-t border-slate-200 bg-white/90 px-5 pb-1 pt-4 backdrop-blur-2xl">
           {onDelete && (
-            <button type="button" onClick={onDelete} className="icon-line-button grid h-12 w-12 place-items-center rounded-xl border-red-400/30 text-red-200">
+            <button type="button" onClick={onDelete} className="grid h-[52px] w-[52px] place-items-center rounded-2xl border border-red-200 bg-red-50 text-red-500 transition active:scale-95">
               <Trash2 size={20} />
             </button>
           )}
-          <button type="button" onClick={onClose} className="h-[52px] rounded-2xl border border-white/10 px-5 text-[16px] text-white/70 transition active:scale-[.97] active:bg-white/[.06]">取消</button>
-          <button type="submit" className="tech-add-button h-[52px] flex-1 rounded-2xl text-lg font-semibold transition active:scale-[.975]">保存档案</button>
+          <button type="button" onClick={onClose} className="h-[52px] rounded-2xl border border-slate-200 bg-white px-5 text-[16px] text-slate-600 transition active:scale-[.97]">取消</button>
+          <button type="submit" className="h-[52px] flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-sky-400 text-lg font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,.22)] transition active:scale-[.975]">保存档案</button>
         </div>
       </form>
     </div>
@@ -481,12 +458,10 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
     ['品牌', vehicle.brand],
     ['型号', vehicle.model],
     ['年款', vehicle.year],
+    ['颜色', vehicle.color],
+    ['购买日期', vehicle.purchaseDate],
     ['车牌号', vehicle.plate],
     ['VIN 车架号', vehicle.vin],
-    ['车主姓名', vehicle.owner],
-    ['联系电话', vehicle.phone],
-    ['认证状态', vehicle.verified ? '已认证' : '未认证'],
-    ['是否常用车', vehicle.favorite ? '是' : '否'],
   ];
   const expiryItems = [
     ['保险到期日', vehicle.insuranceExpiry, expiryLabel(vehicle.insuranceExpiry)],
@@ -540,6 +515,13 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
           </div>
         </section>
         <DetailSection title="保养信息" items={maintenanceItems} />
+        {vehicle.documentImage && (
+          <div className="mt-5 rounded-2xl border border-cyanGlow/12 bg-white/[.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.05)]">
+            <SectionTitle>证件/行驶证</SectionTitle>
+            <img src={vehicle.documentImage} alt="证件/行驶证" className="mt-4 aspect-[4/3] w-full rounded-xl object-cover" />
+          </div>
+        )}
+        <ExpenseDetail expenses={vehicle.expenses} />
         <div className="mt-5 rounded-2xl border border-cyanGlow/12 bg-white/[.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.05)]">
           <SectionTitle>保养备注</SectionTitle>
           <p className="mt-3 whitespace-pre-wrap text-[15px] leading-6 text-white/86">{vehicle.maintenanceNote || '暂无保养备注'}</p>
@@ -554,9 +536,14 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
   );
 }
 
-function ImagePicker({ label, value, onChange, large = false }) {
+function ImagePicker({ label, value, onChange, large = false, aspect: aspectProp, hint }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
+  const [cropSrc, setCropSrc] = useState('');
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const dragRef = useRef(null);
+  const aspect = aspectProp || (large ? 16 / 9 : 4 / 3);
 
   async function handleFile(event) {
     const file = event.target.files?.[0];
@@ -564,8 +551,10 @@ function ImagePicker({ label, value, onChange, large = false }) {
     setIsProcessing(true);
     setError('');
     try {
-      const base64 = await compressImageToBase64(file);
-      onChange(base64);
+      const dataUrl = await fileToDataUrl(file);
+      setCropSrc(dataUrl);
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
     } catch (uploadError) {
       console.error(uploadError);
       setError('图片处理失败，请换一张图片');
@@ -575,35 +564,104 @@ function ImagePicker({ label, value, onChange, large = false }) {
     }
   }
 
+  async function applyCrop() {
+    setIsProcessing(true);
+    setError('');
+    try {
+      const cropped = await cropImageToBase64(cropSrc, { aspect, zoom, offset });
+      onChange(cropped);
+      setCropSrc('');
+    } catch (cropError) {
+      console.error(cropError);
+      setError('裁剪失败，请重新上传');
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
+  function startDrag(event) {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = { x: event.clientX, y: event.clientY, offset };
+  }
+
+  function moveDrag(event) {
+    if (!dragRef.current) return;
+    setOffset({
+      x: dragRef.current.offset.x + event.clientX - dragRef.current.x,
+      y: dragRef.current.offset.y + event.clientY - dragRef.current.y,
+    });
+  }
+
   return (
-    <label className={`upload-card relative grid cursor-pointer place-items-center overflow-hidden rounded-3xl ${large ? 'h-52' : 'h-32'}`}>
-      {value ? (
-        <img src={value} alt={label} className={`h-full w-full ${large ? 'object-contain p-3' : 'object-cover'}`} />
-      ) : (
-        <span className="flex flex-col items-center gap-2 text-white/55">
-          <ImagePlus size={24} />
-          <span className="text-sm">{label}</span>
-          <span className="px-3 text-center text-[11px] leading-4 text-white/36">
-            {large ? '建议上传车辆侧前方照片，效果最佳' : '自动压缩保存'}
+    <>
+      <label className={`light-upload-card relative grid cursor-pointer place-items-center overflow-hidden rounded-3xl ${large ? 'h-52' : 'h-36'}`}>
+        {value ? (
+          <img src={value} alt={label} className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex flex-col items-center gap-2 px-4 text-center text-slate-500">
+            <ImagePlus size={24} />
+            <span className="text-sm font-semibold text-slate-700">{label}</span>
+            <span className="text-[12px] leading-4 text-slate-400">{hint || '上传后可拖动裁剪，自动压缩保存'}</span>
           </span>
+        )}
+        {isProcessing && (
+          <span className="absolute inset-0 grid place-items-center bg-white/75 text-blue-500">
+            <Loader2 className="animate-spin" size={26} />
+          </span>
+        )}
+        {error && <span className="absolute bottom-2 left-2 right-12 rounded bg-red-500/90 px-2 py-1 text-xs text-white">{error}</span>}
+        <span className="absolute bottom-3 right-3 rounded-full border border-blue-200 bg-white/85 p-2 text-blue-500 shadow-sm">
+          <Upload size={16} />
         </span>
+        <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      </label>
+      {cropSrc && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/55 backdrop-blur-sm">
+          <div className="panel-slide-up w-full max-w-[480px] rounded-t-[26px] bg-white p-5 text-slate-900 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[.22em] text-blue-500">Crop Preview</p>
+                <h3 className="mt-1 text-xl font-semibold">{label}</h3>
+              </div>
+              <button type="button" onClick={() => setCropSrc('')} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-slate-50 text-slate-500">
+                <X size={20} />
+              </button>
+            </div>
+            <div
+              className="crop-stage mt-5"
+              style={{ aspectRatio: aspect }}
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={() => { dragRef.current = null; }}
+              onPointerCancel={() => { dragRef.current = null; }}
+            >
+              <img
+                src={cropSrc}
+                alt="裁剪预览"
+                draggable="false"
+                className="crop-image"
+                style={{
+                  transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${zoom})`,
+                }}
+              />
+            </div>
+            <label className="mt-5 block">
+              <span className="text-sm font-medium text-slate-600">缩放</span>
+              <input type="range" min="1" max="3" step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="mt-3 w-full accent-blue-500" />
+            </label>
+            <div className="mt-5 flex gap-3">
+              <button type="button" onClick={() => setCropSrc('')} className="h-12 rounded-2xl border border-slate-200 px-5 text-slate-600">取消</button>
+              <button type="button" onClick={applyCrop} className="h-12 flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-sky-400 font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,.22)]">确认裁剪</button>
+            </div>
+          </div>
+        </div>
       )}
-      {isProcessing && (
-        <span className="absolute inset-0 grid place-items-center bg-[#071326]/75 text-white">
-          <Loader2 className="animate-spin" size={26} />
-        </span>
-      )}
-      {error && <span className="absolute bottom-2 left-2 right-12 rounded bg-red-500/80 px-2 py-1 text-xs text-white">{error}</span>}
-      <span className="absolute bottom-3 right-3 rounded-full border border-cyanGlow/25 bg-black/45 p-2 text-cyanGlow shadow-[0_0_14px_rgba(104,216,255,.16)]">
-        <Upload size={16} />
-      </span>
-      <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
-    </label>
+    </>
   );
 }
 
 function FormSectionTitle({ children }) {
-  return <h3 className="pt-1 text-sm font-semibold uppercase tracking-[.16em] text-white/42">{children}</h3>;
+  return <h3 className="pt-1 text-sm font-semibold uppercase tracking-[.16em] text-slate-400">{children}</h3>;
 }
 
 function DetailSection({ title, items }) {
@@ -631,36 +689,93 @@ function SectionTitle({ children, icon }) {
   );
 }
 
+const expenseTypes = ['保养', '保险', '年检', '加油', '维修', '停车', '洗车', '其他'];
+const emptyExpense = { date: '', type: '保养', amount: '', mileage: '', note: '' };
+
+function ExpenseEditor({ expenses = [], onChange }) {
+  function updateExpense(index, key, value) {
+    onChange(expenses.map((expense, itemIndex) => (itemIndex === index ? { ...expense, [key]: value } : expense)));
+  }
+
+  function addExpense() {
+    onChange([{ ...emptyExpense, id: crypto.randomUUID(), date: new Date().toISOString().slice(0, 10) }, ...expenses]);
+  }
+
+  function removeExpense(index) {
+    onChange(expenses.filter((_, itemIndex) => itemIndex !== index));
+  }
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+      <div className="flex items-center justify-between">
+        <FormSectionTitle>费用记录</FormSectionTitle>
+        <button type="button" onClick={addExpense} className="rounded-full bg-blue-500 px-3 py-1.5 text-sm font-semibold text-white shadow-sm active:scale-95">添加费用</button>
+      </div>
+      <div className="mt-3 text-sm text-slate-500">总费用：<span className="font-semibold text-slate-900">¥{expenseTotal(expenses).toLocaleString()}</span></div>
+      <div className="mt-4 grid gap-4">
+        {expenses.map((expense, index) => (
+          <div key={expense.id || index} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="日期" type="date" value={expense.date} onChange={(value) => updateExpense(index, 'date', value)} />
+              <label className="block">
+                <span className="text-sm font-medium text-slate-600">费用类型</span>
+                <select value={expense.type} onChange={(event) => updateExpense(index, 'type', event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-slate-900 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100">
+                  {expenseTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                </select>
+              </label>
+              <Input label="金额" inputMode="decimal" value={expense.amount} onChange={(value) => updateExpense(index, 'amount', value)} />
+              <Input label="当前公里数" inputMode="numeric" value={expense.mileage} onChange={(value) => updateExpense(index, 'mileage', value)} />
+            </div>
+            <label className="mt-3 block">
+              <span className="text-sm font-medium text-slate-600">备注</span>
+              <input value={expense.note || ''} onChange={(event) => updateExpense(index, 'note', event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100" />
+            </label>
+            <button type="button" onClick={() => removeExpense(index)} className="mt-3 text-sm font-semibold text-red-500">删除记录</button>
+          </div>
+        ))}
+        {!expenses.length && <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-400">暂无费用记录</div>}
+      </div>
+    </section>
+  );
+}
+
+function ExpenseDetail({ expenses = [] }) {
+  return (
+    <section className="mt-5 rounded-2xl border border-cyanGlow/12 bg-white/[.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.05)]">
+      <div className="flex items-center justify-between">
+        <SectionTitle>费用记录</SectionTitle>
+        <span className="rounded-full bg-cyanGlow/10 px-3 py-1 text-sm font-semibold text-cyanGlow">¥{expenseTotal(expenses).toLocaleString()}</span>
+      </div>
+      <div className="mt-4 grid gap-3">
+        {expenses.length ? expenses.map((expense, index) => (
+          <div key={expense.id || index} className="rounded-xl border border-white/8 bg-white/[.04] p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="font-semibold text-white/90">{expense.type || '其他'} · ¥{Number(expense.amount || 0).toLocaleString()}</div>
+                <div className="mt-1 text-xs text-white/45">{expense.date || '未填写日期'}{expense.mileage ? ` · ${formatMileage(expense.mileage)}` : ''}</div>
+              </div>
+            </div>
+            {expense.note && <p className="mt-2 text-sm text-white/62">{expense.note}</p>}
+          </div>
+        )) : <div className="rounded-xl border border-dashed border-white/10 p-4 text-center text-sm text-white/40">暂无费用记录</div>}
+      </div>
+    </section>
+  );
+}
+
 function Input({ label, value, onChange, type = 'text', required, inputMode }) {
   return (
     <label className="block">
-      <span className="text-sm text-white/62">{label}</span>
+      <span className="text-sm font-medium text-slate-600">{label}</span>
       <input
         type={type}
         required={required}
         inputMode={inputMode}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-12 w-full rounded-xl border border-white/10 bg-white/[.07] px-4 text-[16px] outline-none transition placeholder:text-white/30 focus:border-electric focus:bg-white/[.09]"
+        className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-[16px] text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
       />
     </label>
-  );
-}
-
-function SegmentButton({ active, onClick, children }) {
-  return (
-    <button type="button" onClick={onClick} className={`h-11 rounded-lg text-[16px] font-semibold ${active ? 'bg-electric text-white' : 'bg-white/[.07] text-white/65'}`}>
-      {children}
-    </button>
-  );
-}
-
-function Toggle({ active, onClick, icon, children }) {
-  return (
-    <button type="button" onClick={onClick} className={`flex h-12 items-center justify-center gap-2 rounded-lg border text-[15px] ${active ? 'border-electric bg-electric/18 text-white' : 'border-white/10 bg-white/[.05] text-white/55'}`}>
-      {icon}
-      {children}
-    </button>
   );
 }
 
@@ -707,8 +822,10 @@ function normalizeVehicle(vehicle) {
     year: (vehicle.year || '').trim(),
     plate: (vehicle.plate || '').trim(),
     vin: (vehicle.vin || '').trim(),
-    owner: (vehicle.owner || '').trim(),
-    phone: (vehicle.phone || '').trim(),
+    color: (vehicle.color || '').trim(),
+    purchaseDate: vehicle.purchaseDate || '',
+    documentImage: vehicle.documentImage || '',
+    expenses: Array.isArray(vehicle.expenses) ? vehicle.expenses.map(normalizeExpense) : [],
     lastMaintenanceDate: vehicle.lastMaintenanceDate || '',
     lastMaintenanceMileage: (vehicle.lastMaintenanceMileage || '').trim(),
     nextMaintenanceDate: vehicle.nextMaintenanceDate || '',
@@ -718,39 +835,62 @@ function normalizeVehicle(vehicle) {
   };
 }
 
+function normalizeExpense(expense) {
+  return {
+    id: expense.id || crypto.randomUUID(),
+    date: expense.date || '',
+    type: expenseTypes.includes(expense.type) ? expense.type : '其他',
+    amount: String(expense.amount || '').trim(),
+    mileage: String(expense.mileage || '').trim(),
+    note: String(expense.note || '').trim(),
+  };
+}
+
 function setDraftValue(setDraft, key, value) {
   setDraft((current) => ({ ...current, [key]: value }));
 }
 
-function compressImageToBase64(file) {
+function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith('image/')) {
       reject(new Error('请选择图片文件'));
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => {
-      const image = new Image();
-      image.onload = () => {
-        const maxWidth = 1200;
-        const scale = Math.min(1, maxWidth / image.width);
-        const width = Math.max(1, Math.round(image.width * scale));
-        const height = Math.max(1, Math.round(image.height * scale));
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const context = canvas.getContext('2d');
-        context.fillStyle = '#101b2b';
-        context.fillRect(0, 0, width, height);
-        context.drawImage(image, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.75));
-      };
-      image.onerror = () => reject(new Error('图片无法读取'));
-      image.src = reader.result;
-    };
+    reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(new Error('图片读取失败'));
     reader.readAsDataURL(file);
   });
+}
+
+function cropImageToBase64(src, { aspect, zoom, offset }) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const outputWidth = aspect > 1.4 ? 1200 : 1000;
+      const outputHeight = Math.round(outputWidth / aspect);
+      const canvas = document.createElement('canvas');
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
+      const context = canvas.getContext('2d');
+      const baseScale = Math.max(outputWidth / image.width, outputHeight / image.height);
+      const drawWidth = image.width * baseScale * zoom;
+      const drawHeight = image.height * baseScale * zoom;
+      const scaleX = outputWidth / Math.min(window.innerWidth - 40, 440);
+      const sourceX = (outputWidth - drawWidth) / 2 + offset.x * scaleX;
+      const sourceY = (outputHeight - drawHeight) / 2 + offset.y * scaleX;
+      context.fillStyle = '#f8fafc';
+      context.fillRect(0, 0, outputWidth, outputHeight);
+      context.drawImage(image, sourceX, sourceY, drawWidth, drawHeight);
+      resolve(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    image.onerror = () => reject(new Error('图片无法裁剪'));
+    image.src = src;
+  });
+}
+
+function expenseTotal(expenses = []) {
+  return expenses.reduce((total, expense) => total + (Number(expense.amount) || 0), 0);
 }
 
 function expiryLabel(dateString) {

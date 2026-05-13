@@ -140,6 +140,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     inset 0 1px 0 rgba(255,255,255,.08);
 }
 
+.light-panel {
+  border: 1px solid rgba(226,232,240,.95);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(219,234,254,.9), transparent 32%),
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(241,245,249,.98));
+  box-shadow:
+    0 -24px 70px rgba(15,23,42,.2),
+    inset 0 1px 0 rgba(255,255,255,.9);
+}
+
 .upload-card {
   border: 1px solid rgba(104,216,255,.16);
   background:
@@ -148,6 +158,53 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.08),
     0 18px 38px rgba(0,0,0,.18);
+}
+
+.light-upload-card {
+  border: 1px solid rgba(191,219,254,.9);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(219,234,254,.95), transparent 52%),
+    linear-gradient(145deg, rgba(255,255,255,.96), rgba(241,245,249,.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 18px 38px rgba(15,23,42,.08);
+}
+
+.crop-stage {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  border-radius: 20px;
+  border: 1px solid rgba(148,163,184,.35);
+  background:
+    linear-gradient(45deg, rgba(226,232,240,.9) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(226,232,240,.9) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(226,232,240,.9) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(226,232,240,.9) 75%);
+  background-color: #f8fafc;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  background-size: 20px 20px;
+  touch-action: none;
+}
+
+.crop-stage::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,.86);
+  box-shadow: 0 0 0 999px rgba(15,23,42,.18);
+}
+
+.crop-image {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  max-width: none;
+  user-select: none;
+  will-change: transform;
 }
 
 .archive-hero {
