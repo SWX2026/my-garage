@@ -170,6 +170,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     0 18px 38px rgba(15,23,42,.08);
 }
 
+.garage-cover-upload {
+  border: 1px solid rgba(104,216,255,.18);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(104,216,255,.14), transparent 52%),
+    linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.025));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 22px 44px rgba(0,0,0,.22),
+    0 0 24px rgba(22,136,255,.08);
+}
+
 .crop-stage {
   position: relative;
   overflow: hidden;

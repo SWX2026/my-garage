@@ -1,14 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
-  ArrowLeft,
   Camera,
-  Car,
   ImagePlus,
   Loader2,
-  MoreHorizontal,
   Pencil,
-  Search,
   ShieldAlert,
   Trash2,
   Upload,
@@ -17,6 +13,7 @@ import {
 import './styles.css';
 
 const STORAGE_KEY = 'my_garage_pages_v1';
+const GARAGE_PHOTO_KEY = 'my_garage_cover_photo_v1';
 const blankVehicle = {
   name: '',
   category: 'car',
@@ -122,8 +119,7 @@ function App() {
       return seedVehicles;
     }
   });
-  const [activeTab, setActiveTab] = useState('car');
-  const [query, setQuery] = useState('');
+  const [garagePhoto, setGaragePhoto] = useState(() => localStorage.getItem(GARAGE_PHOTO_KEY) || '');
   const [modalMode, setModalMode] = useState(null);
   const [draft, setDraft] = useState(blankVehicle);
   const [detail, setDetail] = useState(null);
@@ -137,29 +133,18 @@ function App() {
     }
   }, [vehicles]);
 
-  const visibleVehicles = useMemo(() => {
-    const keyword = query.trim().toLowerCase();
-    return vehicles
-      .filter((vehicle) => vehicle.category === activeTab)
-      .filter((vehicle) => {
-        if (!keyword) return true;
-        return [
-          vehicle.name,
-          vehicle.brand,
-          vehicle.model,
-          vehicle.year,
-          vehicle.plate,
-          vehicle.vin,
-          vehicle.color,
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(keyword);
-      });
-  }, [activeTab, query, vehicles]);
+  useEffect(() => {
+    try {
+      if (garagePhoto) localStorage.setItem(GARAGE_PHOTO_KEY, garagePhoto);
+      else localStorage.removeItem(GARAGE_PHOTO_KEY);
+    } catch (error) {
+      console.error('车库照片保存失败。', error);
+      alert('车库照片过大，无法保存到浏览器本地存储。请换一张更小的图片。');
+    }
+  }, [garagePhoto]);
 
   function openCreate() {
-    setDraft({ ...blankVehicle, category: activeTab });
+    setDraft({ ...blankVehicle });
     setModalMode('create');
   }
 
@@ -177,7 +162,6 @@ function App() {
     } else {
       const created = { ...payload, id: crypto.randomUUID() };
       setVehicles((current) => [created, ...current]);
-      setActiveTab(created.category);
       setDetail(created);
     }
     setModalMode(null);
@@ -193,38 +177,23 @@ function App() {
   return (
     <main className="min-h-screen bg-[#030812] text-white">
       <div className="garage-shell mx-auto min-h-screen max-w-[480px] pb-32 shadow-[0_0_70px_rgba(0,0,0,.55)]">
-        <header className="sticky top-0 z-20 bg-gradient-to-b from-[#06101f]/96 via-[#06101f]/88 to-[#06101f]/58 px-5 pb-4 pt-4 backdrop-blur-2xl">
+        <header className="bg-gradient-to-b from-[#06101f]/96 via-[#06101f]/88 to-[#06101f]/38 px-5 pb-4 pt-4">
           <div className="mb-3 flex justify-center">
             <BrandLogo compact />
           </div>
-          <div className="grid grid-cols-[40px_1fr_40px] items-center">
-            <button className="icon-line-button grid h-10 w-10 place-items-center rounded-full text-white/90" aria-label="返回">
-              <ArrowLeft size={34} strokeWidth={2.2} />
-            </button>
+          <div className="grid grid-cols-1 items-center">
             <h1 className="title-emboss text-center text-[32px] font-semibold tracking-wide">车库档案</h1>
-            <button className="icon-line-button grid h-10 w-10 place-items-center rounded-full text-white/72" aria-label="更多">
-              <MoreHorizontal size={25} />
-            </button>
           </div>
-          <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-          <label className="glass-search mt-5 flex h-11 items-center gap-3 rounded-2xl px-4 text-white/62">
-            <Search size={18} />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="搜索车辆名称、车牌、VIN"
-              className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-white/38"
-            />
-          </label>
+          <GarageCoverPhoto value={garagePhoto} onChange={setGaragePhoto} />
         </header>
 
-        <section className="space-y-4 px-4 pt-2">
-          {visibleVehicles.length ? (
-            visibleVehicles.map((vehicle, index) => (
+        <section className="space-y-4 px-4 pt-1">
+          {vehicles.length ? (
+            vehicles.map((vehicle, index) => (
               <VehicleCard key={vehicle.id} vehicle={vehicle} index={index} onOpen={() => setDetail(vehicle)} onEdit={() => openEdit(vehicle)} />
             ))
           ) : (
-            <EmptyGarage activeTab={activeTab} onCreate={openCreate} />
+            <EmptyGarage onCreate={openCreate} />
           )}
         </section>
 
@@ -246,27 +215,6 @@ function App() {
   );
 }
 
-function TabBar({ activeTab, setActiveTab }) {
-  const tabs = [
-    ['car', '汽车'],
-    ['motorcycle', '摩托车'],
-  ];
-  return (
-    <nav className="mt-6 flex gap-8">
-      {tabs.map(([key, label]) => (
-        <button
-          key={key}
-          onClick={() => setActiveTab(key)}
-          className={`relative pb-2 text-[23px] font-semibold transition active:scale-95 ${activeTab === key ? 'text-white drop-shadow-[0_0_14px_rgba(104,216,255,.25)]' : 'text-white/52'}`}
-        >
-          {label}
-          {activeTab === key && <span className="absolute bottom-0 left-0 h-1 w-11 rounded-full bg-[linear-gradient(90deg,#65dcff,#1688ff)] shadow-[0_0_16px_rgba(22,136,255,.95)]" />}
-        </button>
-      ))}
-    </nav>
-  );
-}
-
 function VehicleCard({ vehicle, index, onOpen, onEdit }) {
   const alerts = dueAlerts(vehicle);
   const hasPhoto = Boolean(vehicle.vehicleImage);
@@ -282,7 +230,7 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
           style={{ backgroundImage: `url(${vehicle.vehicleImage})` }}
         />
       )}
-      <div className={`absolute inset-0 ${hasPhoto ? 'bg-[linear-gradient(90deg,rgba(5,12,22,.88)_0%,rgba(5,12,22,.64)_42%,rgba(5,12,22,.12)_72%,rgba(5,12,22,0)_100%),linear-gradient(180deg,rgba(5,12,22,.05)_0%,rgba(3,8,18,.42)_100%)]' : ''}`} />
+      <div className={`absolute inset-0 ${hasPhoto ? 'bg-[linear-gradient(180deg,rgba(5,12,22,0)_0%,rgba(5,12,22,.08)_58%,rgba(3,8,18,.34)_100%)]' : ''}`} />
       <div className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-cyanGlow/45 to-transparent" />
       <button
         onClick={(event) => {
@@ -295,7 +243,7 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
         <Pencil size={15} />
       </button>
 
-      <div className="relative z-10 max-w-[64%] pt-3">
+      <div className="relative z-10 max-w-[72%] rounded-2xl bg-black/28 p-3 pt-3 shadow-[0_12px_28px_rgba(0,0,0,.18)] backdrop-blur-[2px]">
         <div className="flex items-center gap-3">
           <LogoImage src={vehicle.brandLogo} label={vehicle.brand} />
           <div className="min-w-0">
@@ -329,9 +277,10 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
 }
 
 function LogoImage({ src, label }) {
+  const fallback = (label || 'G').trim().slice(0, 1).toUpperCase();
   return (
     <div className="grid h-[40px] w-[40px] shrink-0 place-items-center overflow-hidden rounded-full border border-white/20 bg-white/90 text-xs font-bold text-slate-700 shadow-[0_0_18px_rgba(104,216,255,.14)]">
-      {src ? <img src={src} alt={`${label || '品牌'} Logo`} className="h-full w-full object-cover" /> : <Car size={24} />}
+      {src ? <img src={src} alt={`${label || '品牌'} Logo`} className="h-full w-full object-cover" /> : <span className="text-sm font-black">{fallback}</span>}
     </div>
   );
 }
@@ -370,6 +319,22 @@ function BrandLogo({ compact = false }) {
   );
 }
 
+function GarageCoverPhoto({ value, onChange }) {
+  return (
+    <div className="mt-5">
+      <ImagePicker
+        dark
+        large
+        aspect={16 / 9}
+        label="上传车库照片"
+        hint="所有车辆合影或车库环境照，16:9 效果最佳"
+        value={value}
+        onChange={onChange}
+      />
+    </div>
+  );
+}
+
 function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/35 backdrop-blur-md">
@@ -386,6 +351,7 @@ function VehicleForm({ draft, setDraft, onClose, onSave, onDelete }) {
 
         <div className="mt-5 grid gap-3">
           <ImagePicker large aspect={16 / 9} label="车辆封面照片" hint="建议上传车辆侧前方照片，效果最佳" value={draft.vehicleImage} onChange={(value) => setDraftValue(setDraft, 'vehicleImage', value)} />
+          <ImagePicker round aspect={1} label="圆形 Logo 照片" hint="可上传品牌 Logo 或车标照片" value={draft.brandLogo} onChange={(value) => setDraftValue(setDraft, 'brandLogo', value)} />
           <ImagePicker aspect={4 / 3} label="证件/行驶证照片（可选）" hint="按 4:3 裁剪，仅在详情页显示" value={draft.documentImage} onChange={(value) => setDraftValue(setDraft, 'documentImage', value)} />
         </div>
 
@@ -536,7 +502,7 @@ function VehicleDetail({ vehicle, onClose, onEdit }) {
   );
 }
 
-function ImagePicker({ label, value, onChange, large = false, aspect: aspectProp, hint }) {
+function ImagePicker({ label, value, onChange, large = false, aspect: aspectProp, hint, dark = false, round = false }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [cropSrc, setCropSrc] = useState('');
@@ -594,23 +560,23 @@ function ImagePicker({ label, value, onChange, large = false, aspect: aspectProp
 
   return (
     <>
-      <label className={`light-upload-card relative grid cursor-pointer place-items-center overflow-hidden rounded-3xl ${large ? 'h-52' : 'h-36'}`}>
+      <label className={`${dark ? 'garage-cover-upload' : 'light-upload-card'} relative grid cursor-pointer place-items-center overflow-hidden ${round ? 'mx-auto h-32 w-32 rounded-full' : `rounded-3xl ${large ? 'h-52' : 'h-36'}`}`}>
         {value ? (
           <img src={value} alt={label} className="h-full w-full object-cover" />
         ) : (
-          <span className="flex flex-col items-center gap-2 px-4 text-center text-slate-500">
+          <span className={`flex flex-col items-center gap-2 px-4 text-center ${dark ? 'text-white/62' : 'text-slate-500'}`}>
             <ImagePlus size={24} />
-            <span className="text-sm font-semibold text-slate-700">{label}</span>
-            <span className="text-[12px] leading-4 text-slate-400">{hint || '上传后可拖动裁剪，自动压缩保存'}</span>
+            <span className={`text-sm font-semibold ${dark ? 'text-white/90' : 'text-slate-700'}`}>{label}</span>
+            <span className={`text-[12px] leading-4 ${dark ? 'text-white/45' : 'text-slate-400'}`}>{hint || '上传后可拖动裁剪，自动压缩保存'}</span>
           </span>
         )}
         {isProcessing && (
-          <span className="absolute inset-0 grid place-items-center bg-white/75 text-blue-500">
+          <span className={`absolute inset-0 grid place-items-center ${dark ? 'bg-slate-950/65 text-cyanGlow' : 'bg-white/75 text-blue-500'}`}>
             <Loader2 className="animate-spin" size={26} />
           </span>
         )}
         {error && <span className="absolute bottom-2 left-2 right-12 rounded bg-red-500/90 px-2 py-1 text-xs text-white">{error}</span>}
-        <span className="absolute bottom-3 right-3 rounded-full border border-blue-200 bg-white/85 p-2 text-blue-500 shadow-sm">
+        <span className={`absolute ${round ? 'bottom-1 right-1' : 'bottom-3 right-3'} rounded-full border p-2 shadow-sm ${dark ? 'border-cyanGlow/30 bg-black/45 text-cyanGlow' : 'border-blue-200 bg-white/85 text-blue-500'}`}>
           <Upload size={16} />
         </span>
         <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
@@ -779,11 +745,11 @@ function Input({ label, value, onChange, type = 'text', required, inputMode }) {
   );
 }
 
-function EmptyGarage({ activeTab, onCreate }) {
+function EmptyGarage({ onCreate }) {
   return (
     <div className="mt-12 rounded-[12px] border border-dashed border-white/15 bg-white/[.04] p-8 text-center">
       <Camera className="mx-auto text-white/38" size={38} />
-      <h2 className="mt-4 text-xl font-semibold">暂无{activeTab === 'car' ? '汽车' : '摩托车'}</h2>
+      <h2 className="mt-4 text-xl font-semibold">暂无车辆档案</h2>
       <p className="mt-2 text-sm text-white/45">添加车辆后，会显示在你的车库列表中。</p>
       <button onClick={onCreate} className="mt-5 h-11 rounded-lg bg-electric px-7 font-semibold">添加车辆</button>
     </div>
