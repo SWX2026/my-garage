@@ -85,14 +85,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .garage-card {
   border: 1px solid rgba(104,216,255,.18);
   background:
-    linear-gradient(135deg, rgba(35, 48, 66, .76), rgba(14, 28, 46, .68)),
-    linear-gradient(90deg, rgba(255,255,255,.07), transparent);
+    radial-gradient(circle at 82% 48%, rgba(22,136,255,.18), transparent 32%),
+    linear-gradient(135deg, rgba(35, 48, 66, .72), rgba(11, 24, 40, .78)),
+    linear-gradient(90deg, rgba(255,255,255,.06), transparent);
   box-shadow:
     0 20px 48px rgba(0,0,0,.34),
     0 0 28px rgba(22,136,255,.08),
     inset 0 1px 0 rgba(255,255,255,.08),
     inset 0 0 0 1px rgba(255,255,255,.025);
-  backdrop-filter: blur(22px);
+  backdrop-filter: blur(10px);
 }
 
 .garage-card::before {
@@ -101,14 +102,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 90% 55%, rgba(104,216,255,.18), transparent 26%),
-    linear-gradient(120deg, transparent, rgba(255,255,255,.055), transparent 46%);
-  opacity: .72;
-}
-
-.vehicle-float {
-  transform: translateX(6px);
-  filter: saturate(1.06) contrast(1.04);
+    linear-gradient(120deg, transparent, rgba(255,255,255,.035), transparent 46%);
+  opacity: .42;
 }
 
 .tech-add-button {

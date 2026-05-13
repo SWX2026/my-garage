@@ -203,21 +203,21 @@ function App() {
   return (
     <main className="min-h-screen bg-[#030812] text-white">
       <div className="garage-shell mx-auto min-h-screen max-w-[480px] pb-32 shadow-[0_0_70px_rgba(0,0,0,.55)]">
-        <header className="sticky top-0 z-20 bg-gradient-to-b from-[#06101f]/96 via-[#06101f]/88 to-[#06101f]/58 px-5 pb-5 pt-5 backdrop-blur-2xl">
-          <div className="mb-5 flex justify-center">
+        <header className="sticky top-0 z-20 bg-gradient-to-b from-[#06101f]/96 via-[#06101f]/88 to-[#06101f]/58 px-5 pb-4 pt-4 backdrop-blur-2xl">
+          <div className="mb-3 flex justify-center">
             <BrandLogo compact />
           </div>
           <div className="grid grid-cols-[40px_1fr_40px] items-center">
             <button className="icon-line-button grid h-10 w-10 place-items-center rounded-full text-white/90" aria-label="返回">
               <ArrowLeft size={34} strokeWidth={2.2} />
             </button>
-            <h1 className="title-emboss text-center text-[34px] font-semibold tracking-wide">车库档案</h1>
+            <h1 className="title-emboss text-center text-[32px] font-semibold tracking-wide">车库档案</h1>
             <button className="icon-line-button grid h-10 w-10 place-items-center rounded-full text-white/72" aria-label="更多">
               <MoreHorizontal size={25} />
             </button>
           </div>
           <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-          <label className="glass-search mt-6 flex h-12 items-center gap-3 rounded-2xl px-4 text-white/62">
+          <label className="glass-search mt-5 flex h-11 items-center gap-3 rounded-2xl px-4 text-white/62">
             <Search size={18} />
             <input
               value={query}
@@ -228,7 +228,7 @@ function App() {
           </label>
         </header>
 
-        <section className="space-y-5 px-4 pt-2">
+        <section className="space-y-4 px-4 pt-2">
           {visibleVehicles.length ? (
             visibleVehicles.map((vehicle, index) => (
               <VehicleCard key={vehicle.id} vehicle={vehicle} index={index} onOpen={() => setDetail(vehicle)} onEdit={() => openEdit(vehicle)} />
@@ -262,12 +262,12 @@ function TabBar({ activeTab, setActiveTab }) {
     ['motorcycle', '摩托车'],
   ];
   return (
-    <nav className="mt-8 flex gap-8">
+    <nav className="mt-6 flex gap-8">
       {tabs.map(([key, label]) => (
         <button
           key={key}
           onClick={() => setActiveTab(key)}
-          className={`relative pb-2 text-[25px] font-semibold transition active:scale-95 ${activeTab === key ? 'text-white drop-shadow-[0_0_14px_rgba(104,216,255,.25)]' : 'text-white/52'}`}
+          className={`relative pb-2 text-[23px] font-semibold transition active:scale-95 ${activeTab === key ? 'text-white drop-shadow-[0_0_14px_rgba(104,216,255,.25)]' : 'text-white/52'}`}
         >
           {label}
           {activeTab === key && <span className="absolute bottom-0 left-0 h-1 w-11 rounded-full bg-[linear-gradient(90deg,#65dcff,#1688ff)] shadow-[0_0_16px_rgba(22,136,255,.95)]" />}
@@ -288,15 +288,14 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
     >
       {hasPhoto && (
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-75"
+          className="absolute inset-0 bg-cover bg-center opacity-[.88]"
           style={{ backgroundImage: `url(${vehicle.vehicleImage})` }}
         />
       )}
-      <div className={`absolute inset-0 ${hasPhoto ? 'bg-[linear-gradient(90deg,rgba(5,12,22,.94)_0%,rgba(5,12,22,.76)_46%,rgba(5,12,22,.36)_100%),linear-gradient(180deg,rgba(5,12,22,.2)_0%,rgba(3,8,18,.9)_100%)]' : ''}`} />
+      <div className={`absolute inset-0 ${hasPhoto ? 'bg-[linear-gradient(90deg,rgba(5,12,22,.88)_0%,rgba(5,12,22,.64)_42%,rgba(5,12,22,.12)_72%,rgba(5,12,22,0)_100%),linear-gradient(180deg,rgba(5,12,22,.05)_0%,rgba(3,8,18,.42)_100%)]' : ''}`} />
       {vehicle.verified && (
         <div className="absolute left-0 top-0 rounded-br-[14px] border-b border-r border-cyanGlow/25 bg-cyanGlow/15 px-3 py-1 text-[12px] font-semibold text-cyanGlow shadow-[0_0_18px_rgba(104,216,255,.16)]">Lv.2 认证车</div>
       )}
-      <div className="pointer-events-none absolute -right-2 top-2 text-[76px] font-black italic leading-none tracking-[-.04em] text-white/[.045]">G-VAULT</div>
       <div className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-cyanGlow/45 to-transparent" />
       <button
         onClick={(event) => {
@@ -314,7 +313,7 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
           <LogoImage src={vehicle.brandLogo} label={vehicle.brand} />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="truncate text-[22px] font-semibold tracking-wide text-[#f0f6ff] drop-shadow-[0_0_14px_rgba(104,216,255,.12)]">{vehicle.name || '未命名车辆'}</h2>
+              <h2 className="truncate text-[22px] font-semibold tracking-wide text-[#f0f6ff] drop-shadow-[0_0_14px_rgba(0,0,0,.42)]">{vehicle.name || '未命名车辆'}</h2>
               {vehicle.favorite && (
                 <span className="shrink-0 rounded-full border border-cyanGlow/20 bg-cyanGlow/10 px-2 py-0.5 text-[11px] text-cyanGlow">常用车</span>
               )}
@@ -322,7 +321,7 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
           </div>
         </div>
 
-        <p className="mt-3 truncate text-[15px] text-white/62">
+        <p className="mt-3 truncate text-[16px] text-white/70">
           {vehicle.year ? `${vehicle.year} 款 ` : ''}
           {vehicle.model || '未填写型号'}
         </p>
@@ -336,9 +335,7 @@ function VehicleCard({ vehicle, index, onOpen, onEdit }) {
       </div>
 
       <div className="absolute bottom-4 right-0 flex h-[108px] w-[50%] items-end justify-end pr-2">
-        {hasPhoto ? (
-          <img src={vehicle.vehicleImage} alt={vehicle.name} className="vehicle-float max-h-full max-w-full object-contain opacity-90 drop-shadow-[0_22px_22px_rgba(0,0,0,.42)]" />
-        ) : (
+        {!hasPhoto && (
           <DefaultVehicle type={vehicle.category} />
         )}
       </div>
@@ -355,11 +352,11 @@ function LogoImage({ src, label }) {
 }
 
 function Tag({ children }) {
-  return <span className="rounded-md border border-white/8 bg-white/[.075] px-2 py-0.5 text-[12px] text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,.04)]">{children}</span>;
+  return <span className="rounded-md border border-white/10 bg-black/25 px-2 py-0.5 text-[13px] text-white/76 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] backdrop-blur-sm">{children}</span>;
 }
 
 function AlertTag({ children }) {
-  return <span className="rounded-md border border-[#ffca74]/20 bg-[#ffb34d]/16 px-2 py-0.5 text-[12px] text-[#ffd28b] shadow-[0_0_14px_rgba(255,179,77,.14)]">{children}</span>;
+  return <span className="rounded-md border border-[#ffca74]/20 bg-[#ffb34d]/18 px-2 py-0.5 text-[13px] text-[#ffd28b] shadow-[0_0_14px_rgba(255,179,77,.14)] backdrop-blur-sm">{children}</span>;
 }
 
 function BottomDock({ onCreate }) {
@@ -377,13 +374,13 @@ function BottomDock({ onCreate }) {
 
 function BrandLogo({ compact = false }) {
   return (
-    <div className={`garage-pill inline-flex items-center gap-2 rounded-full border border-cyanGlow/45 bg-[linear-gradient(135deg,rgba(38,169,255,.95),rgba(11,96,255,.82))] ${compact ? 'px-4 py-1.5' : 'px-5 py-2'}`}>
-      <svg className="h-5 w-5 drop-shadow-[0_0_10px_rgba(104,216,255,.55)]" viewBox="0 0 32 32" aria-hidden="true">
+    <div className={`garage-pill inline-flex items-center gap-1.5 rounded-full border border-cyanGlow/45 bg-[linear-gradient(135deg,rgba(38,169,255,.95),rgba(11,96,255,.82))] ${compact ? 'px-3.5 py-1' : 'px-5 py-2'}`}>
+      <svg className="h-4 w-4 drop-shadow-[0_0_10px_rgba(104,216,255,.55)]" viewBox="0 0 32 32" aria-hidden="true">
         <path d="M16 3 27 8v8.5c0 6.5-4.6 10.5-11 12.5C9.6 27 5 23 5 16.5V8z" fill="rgba(3,12,25,.52)" stroke="rgba(210,244,255,.95)" strokeWidth="1.8" />
         <path d="M9.5 14 16 8.7 22.5 14v8.2h-4.1v-4.7h-4.8v4.7H9.5z" fill="none" stroke="rgba(104,216,255,.95)" strokeWidth="1.8" strokeLinejoin="round" />
         <path d="M11.2 13.6 16 22.4l4.8-8.8" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity=".82" />
       </svg>
-      <span className="text-xs font-black tracking-[.24em] text-white">G-VAULT</span>
+      <span className="text-[11px] font-black tracking-[.22em] text-white">G-VAULT</span>
     </div>
   );
 }
