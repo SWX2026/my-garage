@@ -508,8 +508,16 @@ function ImagePicker({ label, value, onChange, large = false, aspect: aspectProp
   const [cropSrc, setCropSrc] = useState('');
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const dragRef = useRef(null);
+  const stageRef = useRef(null);
   const aspect = aspectProp || (large ? 16 / 9 : 4 / 3);
+  const containScale = imageSize.width && stageSize.width
+    ? Math.min(stageSize.width / imageSize.width, stageSize.height / imageSize.height)
+    : 1;
+  const previewWidth = imageSize.width * containScale * zoom;
+  const previewHeight = imageSize.height * containScale * zoom;
 
   async function handleFile(event) {
     const file = event.target.files?.[0];
@@ -521,6 +529,7 @@ function ImagePicker({ label, value, onChange, large = false, aspect: aspectProp
       setCropSrc(dataUrl);
       setZoom(1);
       setOffset({ x: 0, y: 0 });
+      readImageSize(dataUrl).then(setImageSize);
     } catch (uploadError) {
       console.error(uploadError);
       setError('图片处理失败，请换一张图片');
@@ -534,7 +543,7 @@ function ImagePicker({ label, value, onChange, large = false, aspect: aspectProp
     setIsProcessing(true);
     setError('');
     try {
-      const cropped = await cropImageToBase64(cropSrc, { aspect, zoom, offset });
+      const cropped = await cropImageToBase64(cropSrc, { aspect, zoom, offset, stageSize, imageSize });
       onChange(cropped);
       setCropSrc('');
     } catch (cropError) {
@@ -594,6 +603,15 @@ function ImagePicker({ label, value, onChange, large = false, aspect: aspectProp
               </button>
             </div>
             <div
+              ref={(node) => {
+                stageRef.current = node;
+                if (node) {
+                  const rect = node.getBoundingClientRect();
+                  if (rect.width && rect.height && (rect.width !== stageSize.width || rect.height !== stageSize.height)) {
+                    setStageSize({ width: rect.width, height: rect.height });
+                  }
+                }
+              }}
               className="crop-stage mt-5"
               style={{ aspectRatio: aspect }}
               onPointerDown={startDrag}
@@ -607,13 +625,15 @@ function ImagePicker({ label, value, onChange, large = false, aspect: aspectProp
                 draggable="false"
                 className="crop-image"
                 style={{
-                  transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${zoom})`,
+                  width: `${previewWidth || 1}px`,
+                  height: `${previewHeight || 1}px`,
+                  transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
                 }}
               />
             </div>
             <label className="mt-5 block">
               <span className="text-sm font-medium text-slate-600">缩放</span>
-              <input type="range" min="1" max="3" step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="mt-3 w-full accent-blue-500" />
+              <input type="range" min="0.4" max="3" step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="mt-3 w-full accent-blue-500" />
             </label>
             <div className="mt-5 flex gap-3">
               <button type="button" onClick={() => setCropSrc('')} className="h-12 rounded-2xl border border-slate-200 px-5 text-slate-600">取消</button>
@@ -829,7 +849,16 @@ function fileToDataUrl(file) {
   });
 }
 
-function cropImageToBase64(src, { aspect, zoom, offset }) {
+function readImageSize(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve({ width: image.width, height: image.height });
+    image.onerror = () => reject(new Error('图片尺寸读取失败'));
+    image.src = src;
+  });
+}
+
+function cropImageToBase64(src, { aspect, zoom, offset, stageSize, imageSize }) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => {
@@ -839,12 +868,16 @@ function cropImageToBase64(src, { aspect, zoom, offset }) {
       canvas.width = outputWidth;
       canvas.height = outputHeight;
       const context = canvas.getContext('2d');
-      const baseScale = Math.max(outputWidth / image.width, outputHeight / image.height);
-      const drawWidth = image.width * baseScale * zoom;
-      const drawHeight = image.height * baseScale * zoom;
-      const scaleX = outputWidth / Math.min(window.innerWidth - 40, 440);
-      const sourceX = (outputWidth - drawWidth) / 2 + offset.x * scaleX;
-      const sourceY = (outputHeight - drawHeight) / 2 + offset.y * scaleX;
+      const previewStage = stageSize.width && stageSize.height
+        ? stageSize
+        : { width: Math.min(window.innerWidth - 40, 440), height: Math.min(window.innerWidth - 40, 440) / aspect };
+      const naturalSize = imageSize.width ? imageSize : { width: image.width, height: image.height };
+      const previewBaseScale = Math.min(previewStage.width / naturalSize.width, previewStage.height / naturalSize.height);
+      const scaleToOutput = outputWidth / previewStage.width;
+      const drawWidth = naturalSize.width * previewBaseScale * zoom * scaleToOutput;
+      const drawHeight = naturalSize.height * previewBaseScale * zoom * scaleToOutput;
+      const sourceX = (outputWidth - drawWidth) / 2 + offset.x * scaleToOutput;
+      const sourceY = (outputHeight - drawHeight) / 2 + offset.y * scaleToOutput;
       context.fillStyle = '#f8fafc';
       context.fillRect(0, 0, outputWidth, outputHeight);
       context.drawImage(image, sourceX, sourceY, drawWidth, drawHeight);

@@ -211,9 +211,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
   left: 50%;
   top: 50%;
-  min-width: 100%;
-  min-height: 100%;
   max-width: none;
+  max-height: none;
+  object-fit: contain;
   user-select: none;
   will-change: transform;
 }
